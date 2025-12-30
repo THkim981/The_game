@@ -1,18 +1,34 @@
 import './App.css'
 
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
-import { AnimatedNumber } from './components/AnimatedNumber'
-import { PenguinCard } from './components/PenguinCard'
+import { HeroHeader } from './components/HeroHeader'
+import { Modal } from './components/Modal'
+import { ResourceSection } from './components/ResourceSection'
+import { RiskSection } from './components/RiskSection'
 import { FxOverlay, Toast } from './components/ToastFx'
-import { BASE_CHIP_RATE, BASE_INCOME, HEAT_MAX } from './constants'
+import { UpgradesSection } from './components/UpgradesSection'
+import { BASE_INCOME, HEAT_MAX } from './constants'
+import type { HoveredButton } from './hooks/useAutoBuy'
+import { useAutoBuy } from './hooks/useAutoBuy'
 import { useGameLogic } from './hooks/useGameLogic'
+import type { RiskKey } from './types'
 import { formatNumber } from './utils/number'
 
 function App() {
   const {
-    state: { resources, levels, toast, fx, openHelp, permBoost },
-    derived: { incomeMultiplier, buffMultiplier, elapsedSeconds, adjustProbs, prestigeGain, snapKey },
+    state: { resources, levels, toast, fx, openHelp, permBoost, permLuck, cashHistory },
+    derived: {
+      incomeMultiplier,
+      buffMultiplier,
+      elapsedSeconds,
+      adjustProbs,
+      prestigeGain,
+      snapKey,
+      chipsRatePerSec,
+      nextPermLuckCost,
+      permLuckCap,
+    },
     actions: {
       setOpenHelp,
       handlePurchase,
@@ -22,12 +38,55 @@ function App() {
       convertCashToHeat,
       grantResources,
       performPrestige,
+      buyPermanentLuck,
     },
     data: { upgrades, upgradeHelp, riskTiers },
   } = useGameLogic()
-    const penguinLevel = Math.max(1, Math.min(10, Math.floor(resources.prestige / 5) + 1))
+
+  const penguinLevel = Math.max(1, Math.min(10, Math.floor(resources.prestige / 5) + 1))
 
   const [devMode, setDevMode] = useState(false)
+  const [autoBuyEnabled, setAutoBuyEnabled] = useState(false)
+  const [hoveredButton, setHoveredButton] = useState<HoveredButton>(null)
+  const [selectedAutoRisk, setSelectedAutoRisk] = useState<RiskKey | null>(null)
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const [animationsDisabled, setAnimationsDisabled] = useState(false)
+  const [featureView, setFeatureView] = useState<'penguin' | 'chart'>('penguin')
+  const [collapsed, setCollapsed] = useState({
+    resources: false,
+    upgrades: false,
+    risks: false,
+  })
+
+  const totalLuck = Math.min(100, resources.luck + permLuck)
+
+  const autoRiskTier = useMemo(
+    () => (selectedAutoRisk ? riskTiers.find((t) => t.key === selectedAutoRisk) ?? null : null),
+    [riskTiers, selectedAutoRisk],
+  )
+
+  useAutoBuy({
+    enabled: autoBuyEnabled,
+    hoveredButton,
+    upgrades,
+    levels,
+    cash: resources.cash,
+    handlePurchase,
+    handlePurchaseBulk,
+  })
+
+  useEffect(() => {
+    if (!autoRiskTier) return undefined
+
+    const tick = () => {
+      const ready = resources.heat >= HEAT_MAX && resources.chips >= autoRiskTier.cost
+      if (ready) rollOutcome(autoRiskTier)
+    }
+
+    tick() // 첫 루프 전에 즉시 한 번 체크
+    const id = window.setInterval(tick, 100)
+    return () => window.clearInterval(id)
+  }, [autoRiskTier, resources.heat, resources.chips, rollOutcome])
 
   const formatDuration = (totalSeconds: number) => {
     const hours = Math.floor(totalSeconds / 3600)
@@ -37,115 +96,43 @@ function App() {
     return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`
   }
 
-  return (
-    <div className="page">
-      <header className="header">
-        <div>
-          <p className="eyebrow">볼트 러시 · 프로토타입</p>
-          <h1>보험 있는 한방</h1>
-          <p className="subtitle">안정 수익을 돌리면서, Heat 100에만 열리는 실험으로 폭발을 노려보세요.</p>
-        </div>
-        <div className="summary">
-          <div>
-            <p>현재 수익</p>
-            <strong>
-              <AnimatedNumber value={BASE_INCOME * incomeMultiplier} formatter={formatNumber} snapKey={snapKey} /> C/s
-            </strong>
-          </div>
-          <div>
-            <p>운빨(Luck)</p>
-            <strong>
-              <AnimatedNumber value={resources.luck} formatter={(v) => v.toFixed(0)} snapKey={snapKey} /> / 100
-            </strong>
-          </div>
-          <div>
-            <p>활성 도박 배수</p>
-            <strong>x{formatNumber(buffMultiplier * (1 + permBoost))}</strong>
-          </div>
-          <div>
-            <p>경과 시간</p>
-            <strong>{formatDuration(elapsedSeconds)}</strong>
-          </div>
-          <div>
-            <p>Prestige</p>
-            <strong>
-              <AnimatedNumber value={resources.prestige} formatter={formatNumber} snapKey={snapKey} /> Shards
-            </strong>
-            <p className="muted" style={{ marginTop: 4 }}>
-              예상 획득: {formatNumber(prestigeGain)}
-            </p>
-          </div>
-        </div>
-      </header>
+  const incomeValue = BASE_INCOME * incomeMultiplier
 
-      <section className="grid resources">
-        <div className="card">
-          <p className="eyebrow">Cash</p>
-          <h2>
-            <AnimatedNumber value={resources.cash} formatter={formatNumber} snapKey={snapKey} />
-          </h2>
-          <p className="muted">기본 방치 자원 · 업그레이드 사용</p>
-        </div>
-        <div className="card">
-          <p className="eyebrow">Chips</p>
-          <h2>
-            <AnimatedNumber value={resources.chips} formatter={formatNumber} snapKey={snapKey} />
-          </h2>
-          <p className="muted">
-            도박 전용 · 초당 {(BASE_CHIP_RATE * (1 + 0.05 * levels.refinery)).toFixed(2)} G
-          </p>
-        </div>
-        <div className="card heat-card">
-          <div className="row">
-            <div>
-              <p className="eyebrow">Heat</p>
-              <h2>
-                <AnimatedNumber value={resources.heat} formatter={(v) => `${v.toFixed(0)} / 100`} snapKey={snapKey} />
-              </h2>
-              <p className="muted">100일 때만 실험 가능</p>
-            </div>
-            <div className="heat-bar" aria-label="heat-progress">
-              <span style={{ width: `${(resources.heat / HEAT_MAX) * 100}%` }} />
-            </div>
-          </div>
-        </div>
-        <div className="card">
-          <p className="eyebrow">Insight</p>
-          <h2>
-            <AnimatedNumber value={resources.insight} formatter={formatNumber} snapKey={snapKey} />
-          </h2>
-          <p className="muted">실험 실패도 누적되어 성장 자원으로 환원</p>
-        </div>
-        <PenguinCard
-          level={penguinLevel}
-          note={`Prestige 5마다 Lv+1 (임시). public/penguin/Lv${penguinLevel}.png을 추가하면 표시됩니다.`}
-        />
-        <div className="card">
-          <p className="eyebrow">Cash → 전환</p>
-          <p className="muted">안전 업그레이드 레벨이 높을수록 전환이 비싸집니다</p>
-          {(() => {
-            const safeLevelScore = levels.printer + levels.vault + levels.autoCollector
-            const chipCost = 120 * Math.pow(1.08, safeLevelScore)
-            const heatCost = 90 * Math.pow(1.08, safeLevelScore)
-            return (
-              <div className="row" style={{ gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
-                <button className="ghost" disabled={resources.cash < chipCost} onClick={() => convertCashToChips()}>
-                  {formatNumber(chipCost)} C → Chips 10
-                </button>
-                <button className="ghost" disabled={resources.cash < heatCost} onClick={() => convertCashToHeat()}>
-                  {formatNumber(heatCost)} C → Heat 10
-                </button>
-              </div>
-            )
-          })()}
-        </div>
-        <div className="card">
-          <p className="eyebrow">숫자 단위 표기</p>
-          <p className="muted" style={{ lineHeight: 1.5 }}>
-            K(10E3) → M(10E6) → B(10E9) → T(10E12) → Qa(10E15) → Qi(10E18) → Sx(10E21) → Sp(10E24) → Oc(10E27) → Nn(10E30)
-          </p>
-        </div>
-      </section>
+  return (
+    <div className={`page ${animationsDisabled ? 'no-anim' : ''}`}>
+      <HeroHeader
+        formatDuration={formatDuration}
+        incomeValue={incomeValue}
+        luck={totalLuck}
+        buffMultiplier={buffMultiplier}
+        permBoost={permBoost}
+        elapsedSeconds={elapsedSeconds}
+        prestige={resources.prestige}
+        prestigeGain={prestigeGain}
+        snapKey={snapKey}
+        formatNumber={formatNumber}
+        onOpenSettings={() => setSettingsOpen(true)}
+        animationsDisabled={animationsDisabled}
+        permLuck={permLuck}
+      />
+
+      <ResourceSection
+        resources={resources}
+        levels={levels}
+        snapKey={snapKey}
+        penguinLevel={penguinLevel}
+        chipsRatePerSec={chipsRatePerSec}
+        collapsed={collapsed.resources}
+        onToggle={() => setCollapsed((prev) => ({ ...prev, resources: !prev.resources }))}
+        formatNumber={formatNumber}
+        convertCashToChips={convertCashToChips}
+        convertCashToHeat={convertCashToHeat}
+        animationsDisabled={animationsDisabled}
+        featureView={featureView}
+        cashHistory={cashHistory}
+        totalLuck={totalLuck}
+        permLuck={permLuck}
+      />
 
       {devMode && (
         <section className="panel">
@@ -165,125 +152,100 @@ function App() {
             <button className="ghost" onClick={() => grantResources({ insight: 1e4 })}>Insight +1e4</button>
             <button className="ghost" onClick={() => grantResources({ luck: 20 })}>Luck +20</button>
             <button className="ghost" onClick={() => grantResources({ cash: 1e15 })}>Cash +1e15</button>
-            <button className="ghost" onClick={() => grantResources({ prestige: 10 })}>Prestige +10</button>
+            <button className="ghost" onClick={() => grantResources({ prestige: 1e4 })}>Prestige +1e4</button>
           </div>
         </section>
       )}
 
-      <section className="panel">
-        <div className="panel-header">
+      <UpgradesSection
+        upgrades={upgrades}
+        upgradeHelp={upgradeHelp}
+        levels={levels}
+        resources={resources}
+        openHelp={openHelp}
+        setOpenHelp={setOpenHelp}
+        handlePurchase={handlePurchase}
+        handlePurchaseBulk={handlePurchaseBulk}
+        autoBuyEnabled={autoBuyEnabled}
+        setAutoBuyEnabled={setAutoBuyEnabled}
+        setHoveredButton={setHoveredButton}
+        performPrestige={performPrestige}
+        prestigeGain={prestigeGain}
+        permLuck={permLuck}
+        permLuckCap={permLuckCap}
+        nextPermLuckCost={nextPermLuckCost}
+        buyPermanentLuck={buyPermanentLuck}
+        totalLuck={totalLuck}
+        devMode={devMode}
+        onToggleDevMode={() => setDevMode((v) => !v)}
+        collapsed={collapsed.upgrades}
+        onToggle={() => setCollapsed((prev) => ({ ...prev, upgrades: !prev.upgrades }))}
+        formatNumber={formatNumber}
+      />
+
+      <RiskSection
+        riskTiers={riskTiers}
+        resources={resources}
+        adjustProbs={adjustProbs}
+        rollOutcome={rollOutcome}
+        selectedAutoRisk={selectedAutoRisk}
+        onSelectAutoRisk={setSelectedAutoRisk}
+        collapsed={collapsed.risks}
+        onToggle={() => setCollapsed((prev) => ({ ...prev, risks: !prev.risks }))}
+      />
+
+      <Modal open={settingsOpen} title="설정" onClose={() => setSettingsOpen(false)}>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+          <input
+            type="checkbox"
+            checked={animationsDisabled}
+            onChange={(event) => setAnimationsDisabled(event.target.checked)}
+            style={{ width: 16, height: 16 }}
+          />
           <div>
-            <p className="eyebrow">안전 업그레이드</p>
-            <h3>스트레스 없는 성장 축</h3>
+            <p style={{ margin: 0, fontWeight: 700 }}>애니메이션 끄기</p>
+            <p className="muted" style={{ marginTop: 4 }}>
+              숫자 증감, 토스트, 이펙트 등 화면 움직임을 모두 정지합니다.
+            </p>
           </div>
-          <div className="row" style={{ gap: 8 }}>
-            <p className="muted">ROI 순으로 가볍게 눌러 성장 곡선을 잡아보세요.</p>
-            <button className="ghost pill" onClick={() => setDevMode((v) => !v)}>
-              {devMode ? '개발자 모드 숨기기' : '개발자 모드' }
-            </button>
-            <button
-              className="ghost pill"
-              disabled={prestigeGain <= 0}
-              onClick={() => performPrestige()}
-            >
-              {prestigeGain <= 0 ? '프리스티지 불가' : `프리스티지 (+${formatNumber(prestigeGain)})`}
-            </button>
-          </div>
-        </div>
-        <div className="grid upgrades">
-          {upgrades.map((upgrade) => {
-            const level = levels[upgrade.key] ?? 0
-            const cost = upgrade.baseCost * Math.pow(upgrade.growth, level)
-            const locked = upgrade.maxLevel ? level >= upgrade.maxLevel : false
-            const bulkCount = locked ? 0 : upgrade.maxLevel ? Math.max(0, Math.min(10, upgrade.maxLevel - level)) : 10
-            let bulkCost = 0
-            for (let i = 0; i < bulkCount; i += 1) {
-              bulkCost += upgrade.baseCost * Math.pow(upgrade.growth, level + i)
-            }
-            return (
-              <div key={upgrade.key} className="card">
-                <div className="row space">
-                  <div>
-                    <p className="eyebrow">Lv.{level}</p>
-                    <h4>{upgrade.name}</h4>
-                    <p className="muted">{upgrade.description}</p>
-                  </div>
-                  <div className="row" style={{ gap: 8 }}>
-                    <button
-                      className="ghost pill"
-                      onClick={() => setOpenHelp((prev) => (prev === upgrade.key ? null : upgrade.key))}
-                    >
-                      도움말
-                    </button>
-                    <button
-                      className="ghost"
-                      disabled={resources.cash < cost || locked}
-                      onClick={() => handlePurchase(upgrade.key)}
-                    >
-                      {locked ? 'MAX' : `구매 ${formatNumber(cost)} C`}
-                    </button>
-                    <button
-                      className="ghost"
-                      disabled={bulkCount === 0 || resources.cash < bulkCost}
-                      onClick={() => handlePurchaseBulk(upgrade.key, 10)}
-                    >
-                      {bulkCount === 0 ? 'MAX' : `10개 구매 ${formatNumber(bulkCost)} C`}
-                    </button>
-                  </div>
-                </div>
-                {openHelp === upgrade.key && (
-                  <div className="help">
-                    <p>{upgradeHelp[upgrade.key]}</p>
-                  </div>
-                )}
-              </div>
-            )
-          })}
-        </div>
-      </section>
+        </label>
 
-      <section className="panel">
-        <div className="panel-header">
-          <div>
-            <p className="eyebrow">고위험 실험(도박)</p>
-            <h3>Heat 100에서만 버튼이 깜빡입니다</h3>
-          </div>
-          <p className="muted">실패해도 Luck/Insight가 오르므로 “망하는 일”은 없습니다.</p>
+        <div style={{ marginTop: 16, display: 'grid', gap: 10 }}>
+          <p style={{ margin: 0, fontWeight: 700 }}>메인 강조 보기</p>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+            <input
+              type="radio"
+              name="feature-view"
+              value="penguin"
+              checked={featureView === 'penguin'}
+              onChange={() => setFeatureView('penguin')}
+            />
+            <span>귀여운 펭귄 보기</span>
+          </label>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+            <input
+              type="radio"
+              name="feature-view"
+              value="chart"
+              checked={featureView === 'chart'}
+              onChange={() => setFeatureView('chart')}
+            />
+            <span>상승 그래프 보기 (Cash 추이)</span>
+          </label>
         </div>
+      </Modal>
 
-        <div className="grid risk-grid">
-          {riskTiers.map((tier) => {
-            const probs = adjustProbs(tier)
-            const ready = resources.heat >= HEAT_MAX && resources.chips >= tier.cost
-            return (
-              <div key={tier.key} className={`card risk ${ready ? 'ready' : ''}`}>
-                <div className="row space">
-                  <div>
-                    <p className="eyebrow">{tier.label}</p>
-                    <h4>Chips {tier.cost} 필요</h4>
-                    <p className="muted">
-                      부스트 {tier.reward.successBuff.toFixed(2)}x ~ {tier.reward.jackpotBuff.toFixed(2)}x / {tier.reward.buffMinutes}분
-                    </p>
-                  </div>
-                  <button disabled={!ready} onClick={() => rollOutcome(tier)}>
-                    {ready ? '실험 실행' : '조건 부족'}
-                  </button>
-                </div>
-                <div className="prob-row">
-                  <span>대성공 {Math.round(probs.jackpot * 100)}%</span>
-                  <span>성공 {Math.round(probs.success * 100)}%</span>
-                  <span>실패 {Math.round(probs.fail * 100)}%</span>
-                  <span>대실패 {Math.round(probs.crash * 100)}%</span>
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      </section>
+      {toast && (
+        <Toast
+          toastKey={toast.key}
+          tone={toast.tone}
+          title={toast.title}
+          detail={toast.detail}
+          disableAnimations={animationsDisabled}
+        />
+      )}
 
-      {toast && <Toast toastKey={toast.key} tone={toast.tone} title={toast.title} detail={toast.detail} />}
-
-      {fx && <FxOverlay fxKey={fx.key} tone={fx.tone} />}
+      {fx && <FxOverlay fxKey={fx.key} tone={fx.tone} disableAnimations={animationsDisabled} />}
     </div>
   )
 }

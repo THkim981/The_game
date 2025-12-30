@@ -21,6 +21,7 @@ export function useGameLogic() {
   const [levels, setLevels] = useState<Record<UpgradeKey, number>>(initialLevels)
   const [buffs, setBuffs] = useState<Buff[]>(initialBuffs)
   const [permBoost, setPermBoost] = useState(0)
+  const [permLuck, setPermLuck] = useState(0)
   const [snapKey, setSnapKey] = useState(0)
   const buffsRef = useRef<Buff[]>([])
   const startTime = useRef(Date.now())
@@ -63,6 +64,33 @@ export function useGameLogic() {
 
   const buffMultiplier = useMemo(() => buffs.reduce((acc, buff) => acc * buff.multiplier, 1), [buffs])
 
+  const prestigeRateBonus = useMemo(() => 1 + 0.02 * resources.prestige, [resources.prestige])
+
+  const chipsRatePerSec = useMemo(
+    () => BASE_CHIP_RATE * (1 + 0.05 * levels.refinery) * prestigeRateBonus,
+    [levels.refinery, prestigeRateBonus],
+  )
+
+  const heatRatePerSec = useMemo(
+    () => BASE_HEAT_RATE * (1 + 0.1 * levels.battery) * prestigeRateBonus,
+    [levels.battery, prestigeRateBonus],
+  )
+
+  const batteryHeatMsPerUnit = useMemo(
+    () => (heatRatePerSec <= 0 ? Number.POSITIVE_INFINITY : 1000 / heatRatePerSec),
+    [heatRatePerSec],
+  )
+
+  const batteryLocked = useMemo(() => batteryHeatMsPerUnit < 100, [batteryHeatMsPerUnit])
+
+  const effectiveUpgrades = useMemo(
+    () =>
+      batteryLocked
+        ? upgrades.map((u) => (u.key === 'battery' ? { ...u, maxLevel: levels.battery } : u))
+        : upgrades,
+    [batteryLocked, levels.battery],
+  )
+
   useEffect(() => {
     const deltaSec = TICK_MS / 1000
 
@@ -89,8 +117,8 @@ export function useGameLogic() {
           printer * vault * auto * (1 + permBoost) * totalBuff * (1 + bankBonus) * insightBonus * prestigeBonus
         const income = BASE_INCOME * baseMultiplier
 
-        const chipsRate = BASE_CHIP_RATE * (1 + 0.05 * levels.refinery)
-        const heatRate = BASE_HEAT_RATE * (1 + 0.1 * levels.battery)
+        const chipsRate = chipsRatePerSec
+        const heatRate = heatRatePerSec
 
         const nextCash = prev.cash + income * deltaSec
         const nextChips = prev.chips + chipsRate * deltaSec
@@ -130,7 +158,7 @@ export function useGameLogic() {
   }, [])
 
   const handlePurchase = (key: UpgradeKey) => {
-    const upgrade = upgrades.find((u) => u.key === key)!
+    const upgrade = effectiveUpgrades.find((u) => u.key === key)!
     const currentLevel = levels[key] ?? 0
 
     if (upgrade.maxLevel && currentLevel >= upgrade.maxLevel) return
@@ -142,7 +170,7 @@ export function useGameLogic() {
   }
 
   const handlePurchaseBulk = (key: UpgradeKey, quantity: number) => {
-    const upgrade = upgrades.find((u) => u.key === key)!
+    const upgrade = effectiveUpgrades.find((u) => u.key === key)!
     const currentLevel = levels[key] ?? 0
     const maxPurchase = upgrade.maxLevel ? Math.max(0, Math.min(quantity, upgrade.maxLevel - currentLevel)) : quantity
     if (maxPurchase <= 0) return
@@ -167,7 +195,7 @@ export function useGameLogic() {
       cash: prev.cash - cost,
       chips: prev.chips + 10,
     }))
-    pushToast('good', '칩 교환', `-${formatNumber(cost)} C → +10 G`)
+    pushToast('good', 'Gold 교환', `-${formatNumber(cost)} C → +10 Gold`)
   }
 
   const convertCashToHeat = () => {
@@ -216,6 +244,19 @@ export function useGameLogic() {
     setToast({ tone: 'good', title: '프리스티지!', detail: `+${gain} Shard 획득`, key: Date.now() })
   }
 
+  const permLuckCap = 50
+  const nextPermLuckCost = Math.ceil(5 * Math.pow(1.2, permLuck))
+
+  const buyPermanentLuck = () => {
+    if (permLuck >= permLuckCap) return
+    if (resources.prestige < nextPermLuckCost) return
+
+    const nextLevel = permLuck + 1
+    setResources((prev) => ({ ...prev, prestige: prev.prestige - nextPermLuckCost }))
+    setPermLuck(nextLevel)
+    pushToast('good', '영구 Luck 구매', `Luck +1 (누적 ${nextLevel})`)
+  }
+
   const addBuff = (multiplier: number, minutes: number) => {
     const expiresAt = Date.now() + minutes * 60 * 1000
     const buff: Buff = { id: `${Date.now()}-${Math.random()}`, multiplier, expiresAt }
@@ -228,7 +269,8 @@ export function useGameLogic() {
 
   const adjustProbs = (tier: RiskTier) => {
     const { baseProbs } = tier
-    const luckRatio = resources.luck / 100
+    const totalLuck = Math.min(100, resources.luck + permLuck)
+    const luckRatio = totalLuck / 100
     const jackpotBase = baseProbs.jackpot * (1 + 0.3 * luckRatio)
     const successBase = baseProbs.success * (1 + 0.6 * luckRatio)
 
@@ -272,7 +314,7 @@ export function useGameLogic() {
 
     if (outcome === 'jackpot') {
       addBuff(reward.jackpotBuff, reward.buffMinutes)
-      if (reward.permBoost) setPermBoost((p) => p + reward.permBoost)
+      if (reward.permBoost) setPermBoost((p) => p + (reward.permBoost ?? 0))
       setResources((prev) => ({ ...prev, insight: prev.insight + insightGain }))
       setResources((prev) => ({ ...prev, luck: clamp(prev.luck - 35, 0, 100) }))
       pushToast('good', '대성공!', `부스트 x${reward.jackpotBuff.toFixed(1)} / Insight +${(
@@ -349,6 +391,7 @@ export function useGameLogic() {
       levels,
       buffs,
       permBoost,
+      permLuck,
       cashHistory,
       toast,
       fx,
@@ -361,6 +404,10 @@ export function useGameLogic() {
       adjustProbs,
       prestigeGain: calculatePrestigeGain(resources),
       snapKey,
+      chipsRatePerSec,
+      heatRatePerSec,
+      permLuckCap,
+      nextPermLuckCost,
     },
     actions: {
       setOpenHelp,
@@ -371,9 +418,10 @@ export function useGameLogic() {
       convertCashToHeat,
       grantResources,
       performPrestige,
+      buyPermanentLuck,
     },
     data: {
-      upgrades,
+      upgrades: effectiveUpgrades,
       upgradeHelp,
       riskTiers,
     },

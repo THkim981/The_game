@@ -6,9 +6,16 @@ type AnimatedNumberProps = {
   formatter?: (v: number) => string
   duration?: number
   snapKey?: number
+  disableAnimation?: boolean
 }
 
-export function AnimatedNumber({ value, formatter = (v) => v.toFixed(2), duration = 240, snapKey }: AnimatedNumberProps) {
+export function AnimatedNumber({
+  value,
+  formatter = (v) => v.toFixed(2),
+  duration = 240,
+  snapKey,
+  disableAnimation = false,
+}: AnimatedNumberProps) {
   const [display, setDisplay] = useState(value)
   const rafRef = useRef<number | null>(null)
   const snapRef = useRef<number | undefined>(snapKey)
@@ -18,6 +25,11 @@ export function AnimatedNumber({ value, formatter = (v) => v.toFixed(2), duratio
     if (snapped) {
       snapRef.current = snapKey
       if (rafRef.current) cancelAnimationFrame(rafRef.current)
+      setDisplay(value)
+      return
+    }
+
+    if (disableAnimation || duration <= 0) {
       setDisplay(value)
       return
     }
@@ -38,7 +50,7 @@ export function AnimatedNumber({ value, formatter = (v) => v.toFixed(2), duratio
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current)
     }
-  }, [value, duration, snapKey])
+  }, [value, duration, snapKey, disableAnimation])
 
   return <span>{formatter(display)}</span>
 }
