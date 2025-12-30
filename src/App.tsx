@@ -3,7 +3,7 @@ import './App.css'
 import { useState } from 'react'
 
 import { AnimatedNumber } from './components/AnimatedNumber'
-import { Sparkline } from './components/Sparkline'
+import { PenguinCard } from './components/PenguinCard'
 import { FxOverlay, Toast } from './components/ToastFx'
 import { BASE_CHIP_RATE, BASE_INCOME, HEAT_MAX } from './constants'
 import { useGameLogic } from './hooks/useGameLogic'
@@ -11,7 +11,7 @@ import { formatNumber } from './utils/number'
 
 function App() {
   const {
-    state: { resources, levels, cashHistory, toast, fx, openHelp, permBoost },
+    state: { resources, levels, toast, fx, openHelp, permBoost },
     derived: { incomeMultiplier, buffMultiplier, elapsedSeconds, adjustProbs, prestigeGain, snapKey },
     actions: {
       setOpenHelp,
@@ -25,6 +25,7 @@ function App() {
     },
     data: { upgrades, upgradeHelp, riskTiers },
   } = useGameLogic()
+    const penguinLevel = Math.max(1, Math.min(10, Math.floor(resources.prestige / 5) + 1))
 
   const [devMode, setDevMode] = useState(false)
 
@@ -115,16 +116,10 @@ function App() {
           </h2>
           <p className="muted">실험 실패도 누적되어 성장 자원으로 환원</p>
         </div>
-        <div className="card spark-card">
-          <div className="row space">
-            <div>
-              <p className="eyebrow">Cash 그래프</p>
-              <p className="muted">최근 흐름을 직관적으로 확인</p>
-            </div>
-            <p className="muted">표본: {cashHistory.length}</p>
-          </div>
-          <Sparkline data={cashHistory} />
-        </div>
+        <PenguinCard
+          level={penguinLevel}
+          note={`Prestige 5마다 Lv+1 (임시). public/penguin/Lv${penguinLevel}.png을 추가하면 표시됩니다.`}
+        />
         <div className="card">
           <p className="eyebrow">Cash → 전환</p>
           <p className="muted">안전 업그레이드 레벨이 높을수록 전환이 비싸집니다</p>
