@@ -51,7 +51,7 @@ export const riskTiers: RiskTier[] = [
     key: 'low',
     label: '낮음',
     cost: 10,
-    baseProbs: { jackpot: 0.05, success: 0.6, neutral: 0, fail: 0.25, crash: 0.1 },
+    baseProbs: { jackpot: 0.25, success: 0.6, neutral: 0, fail: 0.1, crash: 0.05 },
     reward: {
       jackpotBuff: 1.8,
       successBuff: 1.35,
@@ -64,7 +64,7 @@ export const riskTiers: RiskTier[] = [
     key: 'mid',
     label: '중간',
     cost: 25,
-    baseProbs: { jackpot: 0.08, success: 0.57, neutral: 0, fail: 0.22, crash: 0.13 },
+    baseProbs: { jackpot: 0.20, success: 0.57, neutral: 0, fail: 0.15, crash: 0.08 },
     reward: {
       jackpotBuff: 2.6,
       successBuff: 1.7,
@@ -77,7 +77,7 @@ export const riskTiers: RiskTier[] = [
     key: 'high',
     label: '극단',
     cost: 60,
-    baseProbs: { jackpot: 0.15, success: 0.5, neutral: 0, fail: 0.2, crash: 0.15 },
+    baseProbs: { jackpot: 0.19, success: 0.5, neutral: 0, fail: 0.21, crash: 0.15 },
     reward: {
       jackpotBuff: 5,
       successBuff: 2.4,

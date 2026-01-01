@@ -18,7 +18,7 @@ export function RiskSection({ riskTiers, resources, adjustProbs, rollOutcome, se
     <CollapsiblePanel
       eyebrow="고위험 실험(도박)"
       title="Heat 100에서만 버튼이 깜빡입니다"
-      description="실패해도 Luck/Insight가 오르므로 망하는 일은 없습니다. 높은 티어일수록 실패 시 Insight 보상이 큽니다."
+      description="낮음이 가장 안전하고, 티어가 높을수록 성공률은 내려가지만 보상은 커집니다. Luck이 높을수록 성공/대성공 확률이 조금 올라갑니다. 실패해도 Insight가 쌓입니다."
       collapsed={collapsed}
       onToggle={onToggle}
     >

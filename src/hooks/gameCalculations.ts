@@ -59,23 +59,20 @@ export function computePrestigeGain(snapshot: Resources) {
 export function adjustProbabilities(tier: RiskTier, totalLuck: number) {
   const { baseProbs } = tier
   const boundedLuck = clamp(totalLuck, 0, 100)
-  const luckRatio = boundedLuck / 100
-  const jackpotBase = baseProbs.jackpot * (1 + 0.3 * luckRatio)
-  const successBase = baseProbs.success * (1 + 0.6 * luckRatio)
-
-  const weightedTotal = jackpotBase + successBase
   const neutral = 0
 
-  let jackpot = jackpotBase
-  let success = successBase
-  let remainder = 1 - weightedTotal
+  const baseJackpot = baseProbs.jackpot
+  const baseSuccess = baseProbs.success
+  const baseGood = baseJackpot + baseSuccess
 
-  if (remainder < 0) {
-    const scale = 1 / weightedTotal
-    jackpot *= scale
-    success *= scale
-    remainder = 0
-  }
+  // Luck 1당 (대성공+성공) 합을 약 +0.2%p 올림 (최대 100%)
+  const bonusGood = 0.002 * boundedLuck
+  const targetGood = clamp(baseGood + bonusGood, 0, 1)
+
+  const scale = baseGood <= 0 ? 0 : targetGood / baseGood
+  const jackpot = baseJackpot * scale
+  const success = baseSuccess * scale
+  const remainder = 1 - targetGood
 
   const failWeight = baseProbs.fail + baseProbs.crash
   const failShare = failWeight === 0 ? 0.5 : baseProbs.fail / failWeight

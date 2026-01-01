@@ -108,7 +108,7 @@ export function ResourceSection({
           <h2>
             <AnimatedNumber value={resources.insight} formatter={formatNumber} snapKey={snapKey} disableAnimation={animationsDisabled} />
           </h2>
-          <p className="muted">실험 실패가 Insight를 쌓습니다. 높은 티어일수록 실패 Insight가 더 큽니다.</p>
+          <p className="muted">실험 실패가 Insight를 쌓습니다. 높은 티어일수록 더 위험하지만 실패 Insight 보상도 더 큽니다.</p>
         </div>
         {featureView === 'penguin' ? (
           penguinMapEnabled ? (
