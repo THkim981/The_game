@@ -3,6 +3,7 @@ import { AnimatedNumber } from './AnimatedNumber'
 interface HeroHeaderProps {
   formatDuration: (seconds: number) => string
   incomeValue: number
+  insightBonus: number
   luck: number
   buffMultiplier: number
   permBoost: number
@@ -19,6 +20,7 @@ interface HeroHeaderProps {
 export function HeroHeader({
   formatDuration,
   incomeValue,
+  insightBonus,
   luck,
   buffMultiplier,
   permBoost,
@@ -53,6 +55,7 @@ export function HeroHeader({
               />{' '}
               C/s
             </strong>
+            <p className="muted" style={{ marginTop: 4 }}>Insight 보정 x{insightBonus.toFixed(2)}</p>
           </div>
           <div>
             <p>운빨(Luck)</p>

@@ -1,10 +1,8 @@
 export type UpgradeKey =
   | 'printer'
   | 'vault'
-  | 'autoCollector'
   | 'battery'
   | 'refinery'
-  | 'interest'
 
 export type Upgrade = {
   key: UpgradeKey
@@ -57,7 +55,6 @@ export type RiskTier = {
     chipRefund: { neutral: number }
     permBoost?: number
   }
-  cooldownSeconds: number
 }
 
 export type Tone = 'good' | 'warn' | 'bad'

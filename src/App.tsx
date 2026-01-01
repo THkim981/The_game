@@ -21,13 +21,17 @@ function App() {
     derived: {
       incomeMultiplier,
       buffMultiplier,
+      incomeInsightBonus,
+      conversionCosts,
       elapsedSeconds,
       adjustProbs,
       prestigeGain,
       snapKey,
       chipsRatePerSec,
+      heatFullChargeSeconds,
       nextPermLuckCost,
       permLuckCap,
+      maxCash,
     },
     actions: {
       setOpenHelp,
@@ -43,7 +47,18 @@ function App() {
     data: { upgrades, upgradeHelp, riskTiers },
   } = useGameLogic()
 
-  const penguinLevel = Math.max(1, Math.min(10, Math.floor(resources.prestige / 5) + 1))
+  const penguinCashThresholds = useMemo(() => [1e10, 1e16, 1e28, 1e40, 1e51], [])
+  const penguinLevel = useMemo(() => {
+    let level = 1
+    for (let i = 0; i < penguinCashThresholds.length; i += 1) {
+      if (maxCash >= penguinCashThresholds[i]) {
+        level = i + 2 // threshold index 0 unlocks level 2
+      } else {
+        break
+      }
+    }
+    return Math.min(penguinCashThresholds.length + 1, Math.max(1, level))
+  }, [maxCash, penguinCashThresholds])
 
   const [devMode, setDevMode] = useState(false)
   const [autoBuyEnabled, setAutoBuyEnabled] = useState(false)
@@ -52,6 +67,7 @@ function App() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [animationsDisabled, setAnimationsDisabled] = useState(false)
   const [featureView, setFeatureView] = useState<'penguin' | 'chart'>('penguin')
+  const [penguinMapEnabled, setPenguinMapEnabled] = useState(false)
   const [collapsed, setCollapsed] = useState({
     resources: false,
     upgrades: false,
@@ -103,6 +119,7 @@ function App() {
       <HeroHeader
         formatDuration={formatDuration}
         incomeValue={incomeValue}
+        insightBonus={incomeInsightBonus}
         luck={totalLuck}
         buffMultiplier={buffMultiplier}
         permBoost={permBoost}
@@ -118,10 +135,13 @@ function App() {
 
       <ResourceSection
         resources={resources}
-        levels={levels}
         snapKey={snapKey}
         penguinLevel={penguinLevel}
         chipsRatePerSec={chipsRatePerSec}
+        cashToChipsCost={conversionCosts.cashToChips}
+        cashToHeatCost={conversionCosts.cashToHeat}
+        conversionCostMultiplier={conversionCosts.multiplier}
+        heatFullChargeSeconds={heatFullChargeSeconds}
         collapsed={collapsed.resources}
         onToggle={() => setCollapsed((prev) => ({ ...prev, resources: !prev.resources }))}
         formatNumber={formatNumber}
@@ -132,6 +152,7 @@ function App() {
         cashHistory={cashHistory}
         totalLuck={totalLuck}
         permLuck={permLuck}
+        penguinMapEnabled={penguinMapEnabled}
       />
 
       {devMode && (
@@ -152,7 +173,7 @@ function App() {
             <button className="ghost" onClick={() => grantResources({ insight: 1e4 })}>Insight +1e4</button>
             <button className="ghost" onClick={() => grantResources({ luck: 20 })}>Luck +20</button>
             <button className="ghost" onClick={() => grantResources({ cash: 1e15 })}>Cash +1e15</button>
-            <button className="ghost" onClick={() => grantResources({ prestige: 1e4 })}>Prestige +1e4</button>
+            <button className="ghost" onClick={() => grantResources({ prestige: 5 })}>Prestige +5</button>
           </div>
         </section>
       )}
@@ -231,6 +252,22 @@ function App() {
               onChange={() => setFeatureView('chart')}
             />
             <span>상승 그래프 보기 (Cash 추이)</span>
+          </label>
+        </div>
+
+        <div style={{ marginTop: 16, display: 'grid', gap: 8 }}>
+          <p style={{ margin: 0, fontWeight: 700 }}>펭귄 맵</p>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={penguinMapEnabled}
+              onChange={(event) => setPenguinMapEnabled(event.target.checked)}
+              style={{ width: 16, height: 16 }}
+            />
+            <div>
+              <p style={{ margin: 0 }}>펭귄 맵 활성화 (준비중)</p>
+              <p className="muted" style={{ marginTop: 4 }}>추후 이동/모션을 이 맵에서 제어합니다.</p>
+            </div>
           </label>
         </div>
       </Modal>
