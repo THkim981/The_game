@@ -52,20 +52,7 @@ export function useGameDerived({ resources, levels, permBoost, buffs }: DerivedP
     return HEAT_MAX / heatRatePerSec
   }, [heatRatePerSec])
 
-  const batteryHeatMsPerUnit = useMemo(
-    () => (heatRatePerSec <= 0 ? Number.POSITIVE_INFINITY : 1000 / heatRatePerSec),
-    [heatRatePerSec],
-  )
-
-  const batteryLocked = useMemo(() => batteryHeatMsPerUnit < 100, [batteryHeatMsPerUnit])
-
-  const effectiveUpgrades = useMemo(
-    () =>
-      batteryLocked
-        ? upgrades.map((u) => (u.key === 'battery' ? { ...u, maxLevel: levels.battery } : u))
-        : upgrades,
-    [batteryLocked, levels.battery],
-  )
+  const effectiveUpgrades = upgrades
 
   return {
     buffMultiplier,

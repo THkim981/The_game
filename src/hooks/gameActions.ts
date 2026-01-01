@@ -1,4 +1,4 @@
-import { HEAT_MAX, initialBuffs } from '../constants'
+import { CASH_MAX, HEAT_MAX, initialBuffs } from '../constants'
 import type { Buff, Resources, Tone, Upgrade, UpgradeKey } from '../types'
 import { formatNumber } from '../utils/number'
 import { computePrestigeGain } from './gameCalculations'
@@ -24,6 +24,7 @@ interface ActionDeps {
   effectiveUpgrades: Upgrade[]
   initialResources: Resources
   initialLevels: Record<UpgradeKey, number>
+  onAfterPrestige?: () => void
 }
 
 export function buildGameActions({
@@ -45,6 +46,7 @@ export function buildGameActions({
   effectiveUpgrades,
   initialResources,
   initialLevels,
+  onAfterPrestige,
 }: ActionDeps) {
   const pushToast = (tone: Tone, title: string, detail: string) => {
     if (toastTimeout.current) window.clearTimeout(toastTimeout.current)
@@ -125,7 +127,7 @@ export function buildGameActions({
 
   const grantResources = (delta: Partial<Resources>) => {
     setResources((prev) => ({
-      cash: Math.max(0, prev.cash + (delta.cash ?? 0)),
+      cash: Math.min(CASH_MAX, Math.max(0, prev.cash + (delta.cash ?? 0))),
       chips: Math.max(0, prev.chips + (delta.chips ?? 0)),
       heat: Math.max(0, Math.min(HEAT_MAX, prev.heat + (delta.heat ?? 0))),
       luck: Math.max(0, Math.min(100, prev.luck + (delta.luck ?? 0))),
@@ -147,6 +149,7 @@ export function buildGameActions({
     setOpenHelp(null)
     setFx(null)
     setToast({ tone: 'good', title: '프리스티지!', detail: `+${gain} Shard 획득`, key: Date.now() })
+    onAfterPrestige?.()
   }
 
   const permLuckCap = 50

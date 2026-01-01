@@ -32,6 +32,8 @@ function App() {
       nextPermLuckCost,
       permLuckCap,
       maxCash,
+      rankPromptOpen,
+      rankPromptSeconds,
     },
     actions: {
       setOpenHelp,
@@ -43,6 +45,8 @@ function App() {
       grantResources,
       performPrestige,
       buyPermanentLuck,
+      saveRankTime,
+      dismissRankTime,
     },
     data: { upgrades, upgradeHelp, riskTiers },
   } = useGameLogic()
@@ -172,7 +176,7 @@ function App() {
             <button className="ghost" onClick={() => grantResources({ heat: 100 })}>Heat +100</button>
             <button className="ghost" onClick={() => grantResources({ insight: 1e4 })}>Insight +1e4</button>
             <button className="ghost" onClick={() => grantResources({ luck: 20 })}>Luck +20</button>
-            <button className="ghost" onClick={() => grantResources({ cash: 1e15 })}>Cash +1e15</button>
+            <button className="ghost" onClick={() => grantResources({ cash: 1e99 })}>Cash +1e99</button>
             <button className="ghost" onClick={() => grantResources({ prestige: 5 })}>Prestige +5</button>
           </div>
         </section>
@@ -270,6 +274,26 @@ function App() {
             </div>
           </label>
         </div>
+      </Modal>
+
+      <Modal
+        open={rankPromptOpen}
+        title="랭킹 기록"
+        onClose={dismissRankTime}
+        footer={
+          <>
+            <button className="ghost" onClick={dismissRankTime}>아니오</button>
+            <button onClick={saveRankTime}>예</button>
+          </>
+        }
+      >
+        <p>1e100를 달성했습니다. 시간을 랭킹에 기록하시겠습니까?</p>
+        <p className="muted" style={{ marginTop: 8 }}>
+          기록 시간:{' '}
+          {rankPromptSeconds === null
+            ? '계산 중...'
+            : `${formatDuration(Math.floor(rankPromptSeconds))} (${rankPromptSeconds.toFixed(2)}초)`}
+        </p>
       </Modal>
 
       {toast && (

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { initialBuffs, initialLevels, initialResources, riskTiers, upgradeHelp } from '../constants'
 import type { Buff, Resources, RiskTier, Tone, UpgradeKey } from '../types'
 import { adjustProbabilities, computePrestigeGain } from './gameCalculations'
@@ -11,6 +11,10 @@ import { useResourceTick } from './useResourceTick'
 export function useGameLogic() {
   const [resources, setResources] = useState<Resources>(initialResources)
   const [maxCash, setMaxCash] = useState(initialResources.cash)
+  const [runStartMs, setRunStartMs] = useState(() => Date.now())
+  const [runMaxCash, setRunMaxCash] = useState(initialResources.cash)
+  const [rankPromptOpen, setRankPromptOpen] = useState(false)
+  const [rankPromptSeconds, setRankPromptSeconds] = useState<number | null>(null)
   const [levels, setLevels] = useState<Record<UpgradeKey, number>>(initialLevels)
   const [buffs, setBuffs] = useState<Buff[]>(initialBuffs)
   const [permBoost, setPermBoost] = useState(0)
@@ -28,6 +32,8 @@ export function useGameLogic() {
   const toastTimeout = useRef<number | null>(null)
   const [fx, setFx] = useState<null | { tone: Tone; key: number }>(null)
   const [openHelp, setOpenHelp] = useState<UpgradeKey | null>(null)
+
+  const rankTargetCash = 1e100
 
   resourcesRef.current = resources
 
@@ -56,6 +62,22 @@ export function useGameLogic() {
   })
 
   useElapsedTimer(startTime, setElapsedSeconds)
+
+  useEffect(() => {
+    setMaxCash((prev) => (resources.cash > prev ? resources.cash : prev))
+    setRunMaxCash((prev) => (resources.cash > prev ? resources.cash : prev))
+  }, [resources.cash])
+
+  useEffect(() => {
+    if (rankPromptOpen) return
+    if (rankPromptSeconds !== null) return
+    if (runMaxCash < rankTargetCash) return
+
+    const seconds = Math.max(0, (Date.now() - runStartMs) / 1000)
+    setRankPromptSeconds(seconds)
+    setRankPromptOpen(true)
+  }, [rankPromptOpen, rankPromptSeconds, runMaxCash, runStartMs])
+
   const actions = useMemo(
     () =>
       buildGameActions({
@@ -77,6 +99,12 @@ export function useGameLogic() {
         effectiveUpgrades,
         initialResources,
         initialLevels,
+        onAfterPrestige: () => {
+          setRunStartMs(Date.now())
+          setRunMaxCash(initialResources.cash)
+          setRankPromptOpen(false)
+          setRankPromptSeconds(null)
+        },
       }),
     [
       conversionCosts,
@@ -110,6 +138,29 @@ export function useGameLogic() {
     permLuckCap,
     nextPermLuckCost,
   } = actions
+
+  const saveRankTime = useCallback(() => {
+    if (rankPromptSeconds === null) {
+      setRankPromptOpen(false)
+      return
+    }
+
+    try {
+      const key = 'cashRankings'
+      const raw = window.localStorage.getItem(key)
+      const parsed = raw ? (JSON.parse(raw) as Array<{ seconds: number; recordedAt: string }>) : []
+      const next = [...parsed, { seconds: rankPromptSeconds, recordedAt: new Date().toISOString() }]
+      window.localStorage.setItem(key, JSON.stringify(next))
+    } catch {
+      // ignore storage failures
+    }
+
+    setRankPromptOpen(false)
+  }, [rankPromptSeconds])
+
+  const dismissRankTime = useCallback(() => {
+    setRankPromptOpen(false)
+  }, [])
 
   const prestigeGain = useMemo(() => computePrestigeGain(resources), [resources])
 
@@ -167,6 +218,8 @@ export function useGameLogic() {
       permLuckCap,
       nextPermLuckCost,
       maxCash,
+      rankPromptOpen,
+      rankPromptSeconds,
     },
     actions: {
       setOpenHelp,
@@ -178,6 +231,8 @@ export function useGameLogic() {
       grantResources,
       performPrestige,
       buyPermanentLuck,
+      saveRankTime,
+      dismissRankTime,
     },
     data: {
       upgrades: effectiveUpgrades,

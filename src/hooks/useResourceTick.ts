@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { BASE_INCOME, HEAT_MAX, TICK_MS } from '../constants'
+import { BASE_INCOME, CASH_MAX, HEAT_MAX, TICK_MS } from '../constants'
 import type { Buff, Resources, UpgradeKey } from '../types'
 import { clamp } from '../utils/number'
 import { computeIncomeMultiplier } from './gameCalculations'
@@ -52,7 +52,7 @@ export function useResourceTick({
         })
         const income = BASE_INCOME * baseMultiplier
 
-        const nextCash = prev.cash + income * deltaSec
+        const nextCash = Math.min(CASH_MAX, prev.cash + income * deltaSec)
         const nextChips = prev.chips + chipsRatePerSec * deltaSec
         const nextHeat = clamp(prev.heat + heatRatePerSec * deltaSec, 0, HEAT_MAX)
 

@@ -95,7 +95,7 @@ export function UpgradesSection({
               <h4>Shards로 운 올리기</h4>
               <p className="muted">총 Luck {totalLuck.toFixed(0)} / 100 · 영구 {permLuck}/{permLuckCap}</p>
             </div>
-            <div className="row" style={{ gap: 8 }}>
+            <div className="upgrade-actions">
               <button
                 className="ghost"
                 disabled={permLuck >= permLuckCap || resources.prestige < nextPermLuckCost}
@@ -126,7 +126,7 @@ export function UpgradesSection({
                   <h4>{upgrade.name}</h4>
                   <p className="muted">{upgrade.description}</p>
                 </div>
-                <div className="row" style={{ gap: 8 }}>
+                <div className="upgrade-actions">
                   <button
                     className="ghost pill"
                     onClick={() => setOpenHelp(openHelp === upgrade.key ? null : upgrade.key)}
