@@ -12,6 +12,15 @@ dist
 dist-ssr
 *.local
 
+# Cloudflare Wrangler / Miniflare local state
+.wrangler/
+
+# Generated metadata (local tooling)
+bundle-meta.json
+
+# (Accidental) garbled filename from a bad add
+r.name).join(
+
 # Local server database (SQLite)
 server/data/
 server/data/*.sqlite
