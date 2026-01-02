@@ -11,6 +11,7 @@ type AuthModalProps = {
   onChangePassword: (value: string) => void
   onSubmit: () => void
   onToggleMode: () => void
+  onClose?: () => void
 }
 
 export function AuthModal({
@@ -24,9 +25,10 @@ export function AuthModal({
   onChangePassword,
   onSubmit,
   onToggleMode,
+  onClose,
 }: AuthModalProps) {
   return (
-    <Modal open={open} title={isRegisterMode ? '회원가입' : '로그인'} onClose={() => {}} hideClose>
+    <Modal open={open} title={isRegisterMode ? '회원가입' : '로그인'} onClose={onClose ?? (() => {})} hideClose={!onClose}>
       <div style={{ display: 'grid', gap: 10 }}>
         <p className="muted" style={{ margin: 0 }}>
           {isRegisterMode ? '새 계정을 만들려면 아이디와 비밀번호를 입력하세요.' : '아이디와 비밀번호를 입력하세요.'}

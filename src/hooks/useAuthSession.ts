@@ -1,6 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
-
-import { loginUser, logoutUser, registerUser, verifySession } from '../utils/profileStorage'
+import { useCallback, useState } from 'react'
 
 type AuthInfo = {
   profileId: string
@@ -24,16 +22,7 @@ export function useAuthSession(): UseAuthSessionResult {
   const [auth, setAuth] = useState<AuthResult>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [checked, setChecked] = useState(false)
-
-  useEffect(() => {
-    if (checked) return
-
-    setChecked(true)
-    verifySession()
-      .then((result) => setAuth({ profileId: result.profileId, username: result.username }))
-      .catch(() => {})
-  }, [checked])
+  const checked = true
 
   const wrap = useCallback(async <T,>(fn: () => Promise<T>): Promise<T> => {
     setBusy(true)
@@ -69,9 +58,9 @@ export function useAuthSession(): UseAuthSessionResult {
   const login = useCallback(
     (username: string, password: string) =>
       wrap(async () => {
-        const result = await loginUser(username, password)
-        setAuth({ profileId: result.profileId, username: result.username })
-        return { profileId: result.profileId, username: result.username }
+        void username
+        void password
+        throw new Error('로그인 기능이 비활성화되었습니다.')
       }),
     [wrap],
   )
@@ -79,10 +68,9 @@ export function useAuthSession(): UseAuthSessionResult {
   const register = useCallback(
     (username: string, password: string) =>
       wrap(async () => {
-        await registerUser(username, password)
-        const result = await loginUser(username, password)
-        setAuth({ profileId: result.profileId, username: result.username })
-        return { profileId: result.profileId, username: result.username }
+        void username
+        void password
+        throw new Error('회원가입 기능이 비활성화되었습니다.')
       }),
     [wrap],
   )
@@ -90,7 +78,6 @@ export function useAuthSession(): UseAuthSessionResult {
   const logout = useCallback(
     () =>
       wrap(async () => {
-        await logoutUser()
         setAuth(null)
       }),
     [wrap],

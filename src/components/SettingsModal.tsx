@@ -87,7 +87,7 @@ export function SettingsModal({
       <div style={{ marginTop: 16, display: 'grid', gap: 8 }}>
         <p style={{ margin: 0, fontWeight: 700 }}>기록</p>
         <button className="ghost pill" onClick={onManualSave}>
-          수동 저장
+          수동 저장(10분에 한 번 자동 저장됨)
         </button>
         <button className="ghost pill" onClick={onOpenRanking}>
           랭킹 보기

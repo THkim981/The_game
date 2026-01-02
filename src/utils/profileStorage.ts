@@ -20,32 +20,6 @@ export type AuthResult = {
   profileId: string
 }
 
-const TOKEN_KEY = 'game_auth_token'
-
-export function getStoredToken(): string | null {
-  try {
-    return window.localStorage.getItem(TOKEN_KEY)
-  } catch {
-    return null
-  }
-}
-
-export function setStoredToken(token: string): void {
-  try {
-    window.localStorage.setItem(TOKEN_KEY, token)
-  } catch {
-    // ignore
-  }
-}
-
-export function clearStoredToken(): void {
-  try {
-    window.localStorage.removeItem(TOKEN_KEY)
-  } catch {
-    // ignore
-  }
-}
-
 export type SavedGameState = {
   version: 1
   savedAt: number
@@ -93,14 +67,12 @@ export type ProfileSnapshot = {
 type ApiError = Error & { status?: number; body?: string }
 
 async function apiFetch<T>(input: string, init?: RequestInit): Promise<T> {
-  const token = getStoredToken()
   const anonUserId = getOrCreateAnonUserId()
   const url = resolveApiUrl(input)
   const res = await fetch(url, {
     ...init,
     headers: {
       'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(anonUserId ? { 'X-User-Id': anonUserId } : {}),
       ...(init?.headers ?? {}),
     },
@@ -138,28 +110,6 @@ async function apiFetch<T>(input: string, init?: RequestInit): Promise<T> {
         ? ` (Received HTML)`
         : ''),
   )
-}
-
-export async function registerUser(username: string, password: string): Promise<void> {
-  await apiFetch('/api/register', { method: 'POST', body: JSON.stringify({ username, password }) })
-}
-
-export async function loginUser(username: string, password: string): Promise<AuthResult> {
-  const result = await apiFetch<AuthResult>('/api/login', {
-    method: 'POST',
-    body: JSON.stringify({ username, password }),
-  })
-  setStoredToken(result.token)
-  return result
-}
-
-export async function logoutUser(): Promise<void> {
-  await apiFetch('/api/logout', { method: 'POST' })
-  clearStoredToken()
-}
-
-export async function verifySession(): Promise<AuthResult> {
-  return apiFetch('/api/verify')
 }
 
 export async function loadProfileSave(profileId: ProfileId): Promise<SavedGameState | null> {

@@ -1,0 +1,596 @@
+{
+  "inputs": {
+    "_lib/http.ts": {
+      "bytes": 617,
+      "imports": [
+        {
+          "path": "C:\\Users\\kimtaehun\\source\\repos\\The_Game\\.wrangler\\tmp\\pages-ytufTs\\functionsRoutes-0.6844671549857786.mjs",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "<runtime>",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "_lib/d1.ts": {
+      "bytes": 688,
+      "imports": [
+        {
+          "path": "C:\\Users\\kimtaehun\\source\\repos\\The_Game\\.wrangler\\tmp\\pages-ytufTs\\functionsRoutes-0.6844671549857786.mjs",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "<runtime>",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "_lib/crypto.ts": {
+      "bytes": 984,
+      "imports": [
+        {
+          "path": "C:\\Users\\kimtaehun\\source\\repos\\The_Game\\.wrangler\\tmp\\pages-ytufTs\\functionsRoutes-0.6844671549857786.mjs",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "<runtime>",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "_lib/api.ts": {
+      "bytes": 10450,
+      "imports": [
+        {
+          "path": "_lib/d1.ts",
+          "kind": "import-statement",
+          "original": "./d1"
+        },
+        {
+          "path": "_lib/crypto.ts",
+          "kind": "import-statement",
+          "original": "./crypto"
+        },
+        {
+          "path": "C:\\Users\\kimtaehun\\source\\repos\\The_Game\\.wrangler\\tmp\\pages-ytufTs\\functionsRoutes-0.6844671549857786.mjs",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "<runtime>",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "api/profile/[id]/best-time.ts": {
+      "bytes": 930,
+      "imports": [
+        {
+          "path": "_lib/http.ts",
+          "kind": "import-statement",
+          "original": "../../../_lib/http"
+        },
+        {
+          "path": "_lib/api.ts",
+          "kind": "import-statement",
+          "original": "../../../_lib/api"
+        },
+        {
+          "path": "C:\\Users\\kimtaehun\\source\\repos\\The_Game\\.wrangler\\tmp\\pages-ytufTs\\functionsRoutes-0.6844671549857786.mjs",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "<runtime>",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "api/profile/[id]/reset.ts": {
+      "bytes": 744,
+      "imports": [
+        {
+          "path": "_lib/http.ts",
+          "kind": "import-statement",
+          "original": "../../../_lib/http"
+        },
+        {
+          "path": "_lib/api.ts",
+          "kind": "import-statement",
+          "original": "../../../_lib/api"
+        },
+        {
+          "path": "C:\\Users\\kimtaehun\\source\\repos\\The_Game\\.wrangler\\tmp\\pages-ytufTs\\functionsRoutes-0.6844671549857786.mjs",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "<runtime>",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "api/profile/[id]/save.ts": {
+      "bytes": 1278,
+      "imports": [
+        {
+          "path": "_lib/http.ts",
+          "kind": "import-statement",
+          "original": "../../../_lib/http"
+        },
+        {
+          "path": "_lib/api.ts",
+          "kind": "import-statement",
+          "original": "../../../_lib/api"
+        },
+        {
+          "path": "C:\\Users\\kimtaehun\\source\\repos\\The_Game\\.wrangler\\tmp\\pages-ytufTs\\functionsRoutes-0.6844671549857786.mjs",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "<runtime>",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "api/profile/[id]/snapshots.ts": {
+      "bytes": 801,
+      "imports": [
+        {
+          "path": "_lib/http.ts",
+          "kind": "import-statement",
+          "original": "../../../_lib/http"
+        },
+        {
+          "path": "_lib/api.ts",
+          "kind": "import-statement",
+          "original": "../../../_lib/api"
+        },
+        {
+          "path": "C:\\Users\\kimtaehun\\source\\repos\\The_Game\\.wrangler\\tmp\\pages-ytufTs\\functionsRoutes-0.6844671549857786.mjs",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "<runtime>",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "api/profile/[id]/stats.ts": {
+      "bytes": 1441,
+      "imports": [
+        {
+          "path": "_lib/http.ts",
+          "kind": "import-statement",
+          "original": "../../../_lib/http"
+        },
+        {
+          "path": "_lib/api.ts",
+          "kind": "import-statement",
+          "original": "../../../_lib/api"
+        },
+        {
+          "path": "C:\\Users\\kimtaehun\\source\\repos\\The_Game\\.wrangler\\tmp\\pages-ytufTs\\functionsRoutes-0.6844671549857786.mjs",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "<runtime>",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "api/login.ts": {
+      "bytes": 1033,
+      "imports": [
+        {
+          "path": "_lib/http.ts",
+          "kind": "import-statement",
+          "original": "../_lib/http"
+        },
+        {
+          "path": "_lib/api.ts",
+          "kind": "import-statement",
+          "original": "../_lib/api"
+        },
+        {
+          "path": "C:\\Users\\kimtaehun\\source\\repos\\The_Game\\.wrangler\\tmp\\pages-ytufTs\\functionsRoutes-0.6844671549857786.mjs",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "<runtime>",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "api/logout.ts": {
+      "bytes": 529,
+      "imports": [
+        {
+          "path": "_lib/http.ts",
+          "kind": "import-statement",
+          "original": "../_lib/http"
+        },
+        {
+          "path": "_lib/api.ts",
+          "kind": "import-statement",
+          "original": "../_lib/api"
+        },
+        {
+          "path": "C:\\Users\\kimtaehun\\source\\repos\\The_Game\\.wrangler\\tmp\\pages-ytufTs\\functionsRoutes-0.6844671549857786.mjs",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "<runtime>",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "api/ranking.ts": {
+      "bytes": 594,
+      "imports": [
+        {
+          "path": "_lib/http.ts",
+          "kind": "import-statement",
+          "original": "../_lib/http"
+        },
+        {
+          "path": "_lib/api.ts",
+          "kind": "import-statement",
+          "original": "../_lib/api"
+        },
+        {
+          "path": "C:\\Users\\kimtaehun\\source\\repos\\The_Game\\.wrangler\\tmp\\pages-ytufTs\\functionsRoutes-0.6844671549857786.mjs",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "<runtime>",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "api/register.ts": {
+      "bytes": 1142,
+      "imports": [
+        {
+          "path": "_lib/http.ts",
+          "kind": "import-statement",
+          "original": "../_lib/http"
+        },
+        {
+          "path": "_lib/api.ts",
+          "kind": "import-statement",
+          "original": "../_lib/api"
+        },
+        {
+          "path": "C:\\Users\\kimtaehun\\source\\repos\\The_Game\\.wrangler\\tmp\\pages-ytufTs\\functionsRoutes-0.6844671549857786.mjs",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "<runtime>",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "api/score.ts": {
+      "bytes": 1134,
+      "imports": [
+        {
+          "path": "_lib/http.ts",
+          "kind": "import-statement",
+          "original": "../_lib/http"
+        },
+        {
+          "path": "_lib/api.ts",
+          "kind": "import-statement",
+          "original": "../_lib/api"
+        },
+        {
+          "path": "C:\\Users\\kimtaehun\\source\\repos\\The_Game\\.wrangler\\tmp\\pages-ytufTs\\functionsRoutes-0.6844671549857786.mjs",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "<runtime>",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "api/verify.ts": {
+      "bytes": 771,
+      "imports": [
+        {
+          "path": "_lib/http.ts",
+          "kind": "import-statement",
+          "original": "../_lib/http"
+        },
+        {
+          "path": "_lib/api.ts",
+          "kind": "import-statement",
+          "original": "../_lib/api"
+        },
+        {
+          "path": "C:\\Users\\kimtaehun\\source\\repos\\The_Game\\.wrangler\\tmp\\pages-ytufTs\\functionsRoutes-0.6844671549857786.mjs",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "<runtime>",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "ranking.ts": {
+      "bytes": 1129,
+      "imports": [
+        {
+          "path": "_lib/http.ts",
+          "kind": "import-statement",
+          "original": "./_lib/http"
+        },
+        {
+          "path": "_lib/d1.ts",
+          "kind": "import-statement",
+          "original": "./_lib/d1"
+        },
+        {
+          "path": "C:\\Users\\kimtaehun\\source\\repos\\The_Game\\.wrangler\\tmp\\pages-ytufTs\\functionsRoutes-0.6844671549857786.mjs",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "<runtime>",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "score.ts": {
+      "bytes": 2379,
+      "imports": [
+        {
+          "path": "_lib/http.ts",
+          "kind": "import-statement",
+          "original": "./_lib/http"
+        },
+        {
+          "path": "_lib/d1.ts",
+          "kind": "import-statement",
+          "original": "./_lib/d1"
+        },
+        {
+          "path": "C:\\Users\\kimtaehun\\source\\repos\\The_Game\\.wrangler\\tmp\\pages-ytufTs\\functionsRoutes-0.6844671549857786.mjs",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "<runtime>",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "../.wrangler/tmp/pages-ytufTs/functionsRoutes-0.6844671549857786.mjs": {
+      "bytes": 4006,
+      "imports": [
+        {
+          "path": "api/profile/[id]/best-time.ts",
+          "kind": "import-statement",
+          "original": "C:\\Users\\kimtaehun\\source\\repos\\The_Game\\functions\\api\\profile\\[id]\\best-time.ts"
+        },
+        {
+          "path": "api/profile/[id]/reset.ts",
+          "kind": "import-statement",
+          "original": "C:\\Users\\kimtaehun\\source\\repos\\The_Game\\functions\\api\\profile\\[id]\\reset.ts"
+        },
+        {
+          "path": "api/profile/[id]/save.ts",
+          "kind": "import-statement",
+          "original": "C:\\Users\\kimtaehun\\source\\repos\\The_Game\\functions\\api\\profile\\[id]\\save.ts"
+        },
+        {
+          "path": "api/profile/[id]/snapshots.ts",
+          "kind": "import-statement",
+          "original": "C:\\Users\\kimtaehun\\source\\repos\\The_Game\\functions\\api\\profile\\[id]\\snapshots.ts"
+        },
+        {
+          "path": "api/profile/[id]/stats.ts",
+          "kind": "import-statement",
+          "original": "C:\\Users\\kimtaehun\\source\\repos\\The_Game\\functions\\api\\profile\\[id]\\stats.ts"
+        },
+        {
+          "path": "api/login.ts",
+          "kind": "import-statement",
+          "original": "C:\\Users\\kimtaehun\\source\\repos\\The_Game\\functions\\api\\login.ts"
+        },
+        {
+          "path": "api/logout.ts",
+          "kind": "import-statement",
+          "original": "C:\\Users\\kimtaehun\\source\\repos\\The_Game\\functions\\api\\logout.ts"
+        },
+        {
+          "path": "api/ranking.ts",
+          "kind": "import-statement",
+          "original": "C:\\Users\\kimtaehun\\source\\repos\\The_Game\\functions\\api\\ranking.ts"
+        },
+        {
+          "path": "api/register.ts",
+          "kind": "import-statement",
+          "original": "C:\\Users\\kimtaehun\\source\\repos\\The_Game\\functions\\api\\register.ts"
+        },
+        {
+          "path": "api/score.ts",
+          "kind": "import-statement",
+          "original": "C:\\Users\\kimtaehun\\source\\repos\\The_Game\\functions\\api\\score.ts"
+        },
+        {
+          "path": "api/verify.ts",
+          "kind": "import-statement",
+          "original": "C:\\Users\\kimtaehun\\source\\repos\\The_Game\\functions\\api\\verify.ts"
+        },
+        {
+          "path": "ranking.ts",
+          "kind": "import-statement",
+          "original": "C:\\Users\\kimtaehun\\source\\repos\\The_Game\\functions\\ranking.ts"
+        },
+        {
+          "path": "score.ts",
+          "kind": "import-statement",
+          "original": "C:\\Users\\kimtaehun\\source\\repos\\The_Game\\functions\\score.ts"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../../../AppData/Local/npm-cache/_npx/32026684e21afda6/node_modules/path-to-regexp/dist.es2015/index.js": {
+      "bytes": 15454,
+      "imports": [
+        {
+          "path": "C:\\Users\\kimtaehun\\source\\repos\\The_Game\\.wrangler\\tmp\\pages-ytufTs\\functionsRoutes-0.6844671549857786.mjs",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "<runtime>",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "../../../../AppData/Local/npm-cache/_npx/32026684e21afda6/node_modules/wrangler/templates/pages-template-worker.ts": {
+      "bytes": 5638,
+      "imports": [
+        {
+          "path": "../../../../AppData/Local/npm-cache/_npx/32026684e21afda6/node_modules/path-to-regexp/dist.es2015/index.js",
+          "kind": "import-statement",
+          "original": "path-to-regexp"
+        },
+        {
+          "path": "C:\\Users\\kimtaehun\\source\\repos\\The_Game\\.wrangler\\tmp\\pages-ytufTs\\functionsRoutes-0.6844671549857786.mjs",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "<runtime>",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    }
+  },
+  "outputs": {
+    "../.wrangler/functions-build/index.js": {
+      "imports": [],
+      "exports": [
+        "default"
+      ],
+      "entryPoint": "../../../../AppData/Local/npm-cache/_npx/32026684e21afda6/node_modules/wrangler/templates/pages-template-worker.ts",
+      "inputs": {
+        "_lib/http.ts": {
+          "bytesInOutput": 614
+        },
+        "_lib/d1.ts": {
+          "bytesInOutput": 486
+        },
+        "_lib/crypto.ts": {
+          "bytesInOutput": 976
+        },
+        "_lib/api.ts": {
+          "bytesInOutput": 9704
+        },
+        "api/profile/[id]/best-time.ts": {
+          "bytesInOutput": 721
+        },
+        "api/profile/[id]/reset.ts": {
+          "bytesInOutput": 559
+        },
+        "api/profile/[id]/save.ts": {
+          "bytesInOutput": 993
+        },
+        "api/profile/[id]/snapshots.ts": {
+          "bytesInOutput": 609
+        },
+        "api/profile/[id]/stats.ts": {
+          "bytesInOutput": 1215
+        },
+        "api/login.ts": {
+          "bytesInOutput": 918
+        },
+        "api/logout.ts": {
+          "bytesInOutput": 382
+        },
+        "api/ranking.ts": {
+          "bytesInOutput": 463
+        },
+        "api/register.ts": {
+          "bytesInOutput": 1068
+        },
+        "api/score.ts": {
+          "bytesInOutput": 844
+        },
+        "api/verify.ts": {
+          "bytesInOutput": 621
+        },
+        "ranking.ts": {
+          "bytesInOutput": 997
+        },
+        "score.ts": {
+          "bytesInOutput": 2270
+        },
+        "../.wrangler/tmp/pages-ytufTs/functionsRoutes-0.6844671549857786.mjs": {
+          "bytesInOutput": 1754
+        },
+        "../../../../AppData/Local/npm-cache/_npx/32026684e21afda6/node_modules/path-to-regexp/dist.es2015/index.js": {
+          "bytesInOutput": 10584
+        },
+        "../../../../AppData/Local/npm-cache/_npx/32026684e21afda6/node_modules/wrangler/templates/pages-template-worker.ts": {
+          "bytesInOutput": 3766
+        }
+      },
+      "bytes": 40392
+    }
+  }
+}
