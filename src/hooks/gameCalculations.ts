@@ -1,4 +1,4 @@
-import type { Buff, Resources, RiskTier, UpgradeKey } from '../types'
+import type { Resources, RiskTier, UpgradeKey } from '../types'
 import { clamp } from '../utils/number'
 
 export function getIncomeComponents(params: {

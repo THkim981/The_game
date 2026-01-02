@@ -1,6 +1,5 @@
 import { HEAT_MAX } from '../constants'
 import type { RiskTier, Tone } from '../types'
-import { clamp } from '../utils/number'
 
 interface RiskDeps {
   getResources: () => { heat: number; chips: number; luck: number; insight: number }
