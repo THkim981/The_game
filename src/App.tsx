@@ -246,9 +246,15 @@ function GameApp({ profileId }: GameAppProps) {
 }
 
 function App() {
-  // 로그인 없이 익명 UUID 기반으로 유저/프로필을 식별
-  const profileId = useMemo(() => getOrCreateAnonUserId(), [])
-  return <GameApp profileId={profileId} />
+  const anonProfileId = useMemo(() => getOrCreateAnonUserId(), [])
+
+  const profileId = anonProfileId
+
+  return (
+    <>
+      <GameApp profileId={profileId} />
+    </>
+  )
 }
 
 export default App

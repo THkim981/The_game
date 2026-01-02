@@ -10,7 +10,7 @@ type AutoSaveParams = {
   getStatsPatch: () => Partial<ProfileStats>
 }
 
-export function useAutoSaveProfile({ profileId, intervalMs = 1500, getSaveState, getStatsPatch }: AutoSaveParams) {
+export function useAutoSaveProfile({ profileId, intervalMs = 600000, getSaveState, getStatsPatch }: AutoSaveParams) {
   const getSaveStateRef = useRef(getSaveState)
   const getStatsPatchRef = useRef(getStatsPatch)
 

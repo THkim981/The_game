@@ -1,0 +1,12 @@
+name = "the-game"
+main = "server/worker.ts"
+compatibility_date = "2026-01-02"
+
+# D1 binding (fill in database_id after creation)
+[[d1_databases]]
+binding = "DB"
+database_name = "the-game"
+database_id = "1c938546-6112-4fc2-803d-af901a8e515f"
+
+# If you deploy as Pages Functions instead, wrangler.toml can live at repo root
+# but build/deploy is driven by Pages. This file is still useful for local dev.
