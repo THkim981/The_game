@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: the-game
+    env: node
+    buildCommand: npm ci && npm run build
+    startCommand: node server/index.cjs
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Persist SQLite to Render Disk
+      - key: SQLITE_PATH
+        value: /var/data/app.sqlite
+    disk:
+      name: the-game-data
+      mountPath: /var/data
+      sizeGB: 1

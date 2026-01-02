@@ -3,10 +3,24 @@ const fs = require('node:fs')
 const crypto = require('node:crypto')
 const Database = require('better-sqlite3')
 
-const dataDir = path.join(process.cwd(), 'server', 'data')
-if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true })
+function resolveDbPath() {
+  const explicitPath = process.env.SQLITE_PATH || process.env.DB_PATH
+  if (explicitPath && String(explicitPath).trim().length > 0) {
+    return path.resolve(String(explicitPath).trim())
+  }
 
-const dbPath = path.join(dataDir, 'app.sqlite')
+  const explicitDir = process.env.SQLITE_DIR || process.env.DATA_DIR
+  const dataDir = explicitDir && String(explicitDir).trim().length > 0
+    ? path.resolve(String(explicitDir).trim())
+    : path.join(process.cwd(), 'server', 'data')
+
+  return path.join(dataDir, 'app.sqlite')
+}
+
+const dbPath = resolveDbPath()
+const dbDir = path.dirname(dbPath)
+if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true })
+
 const db = new Database(dbPath)
 
 db.pragma('journal_mode = WAL')

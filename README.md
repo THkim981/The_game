@@ -10,6 +10,21 @@ React + TypeScript + Vite 기반의 방치형/도박 하이브리드 프로토�
 - 테스트: `npm run test` (Vitest + jsdom)
 - 빌드: `npm run build`
 
+## Render 배포 (프론트+서버 단일 도메인)
+
+이 프로젝트는 Express가 `dist/`를 정적 서빙하도록 되어 있어서(Render에서는 Web Service 1개로) 프론트+API를 같이 배포할 수 있습니다.
+
+- 권장: 루트의 `render.yaml`(Blueprint)로 생성
+	- Render 대시보드 → **New** → **Blueprint** → 레포 연결 → **Apply**
+	- SQLite는 Persistent Disk(`/var/data`)에 저장되며, DB 파일 경로는 `SQLITE_PATH=/var/data/app.sqlite` 를 사용합니다.
+
+- 수동 생성(클릭으로 직접 설정) 시
+	- Type: **Web Service (Node)**
+	- Build Command: `npm ci && npm run build`
+	- Start Command: `node server/index.cjs`
+	- Env Vars: `NODE_ENV=production`, `SQLITE_PATH=/var/data/app.sqlite`
+	- Disks: Mount Path `/var/data` (없으면 재시작/재배포 때 DB가 초기화될 수 있습니다)
+
 ## 구조
 - `src/App.tsx`: 자원 루프, 업그레이드, 리스크 실험 로직 및 UI
 - `src/test/setup.ts`: 테스트 환경 설정 (`@testing-library/jest-dom`)
