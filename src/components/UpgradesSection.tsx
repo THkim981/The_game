@@ -22,8 +22,6 @@ interface UpgradesSectionProps {
   nextPermLuckCost: number
   buyPermanentLuck: () => void
   totalLuck: number
-  devMode: boolean
-  onToggleDevMode: () => void
   collapsed: boolean
   onToggle: () => void
   formatNumber?: (value: number) => string
@@ -48,8 +46,6 @@ export function UpgradesSection({
   nextPermLuckCost,
   buyPermanentLuck,
   totalLuck,
-  devMode,
-  onToggleDevMode,
   collapsed,
   onToggle,
   formatNumber = defaultFormatNumber,
@@ -67,9 +63,6 @@ export function UpgradesSection({
           자동 구매 {autoBuyEnabled ? '활성화' : '비활성화'}
         </span>
       </label>
-      <button className="ghost pill" onClick={onToggleDevMode}>
-        {devMode ? '개발자 모드 숨기기' : '개발자 모드' }
-      </button>
       <button className="ghost pill" disabled={prestigeGain <= 0} onClick={performPrestige}>
         {prestigeGain <= 0 ? '프리스티지 불가' : `프리스티지 (+${formatNumber(prestigeGain)})`}
       </button>
@@ -80,7 +73,7 @@ export function UpgradesSection({
       >
         {permLuck >= permLuckCap
           ? '영구 Luck 최대'
-          : `영구 Luck +1 (-${formatNumber(nextPermLuckCost)} Shard)`}
+          : `영구 Luck +1 (-${formatNumber(nextPermLuckCost)} PTG)`}
       </button>
     </>
   )
@@ -92,7 +85,7 @@ export function UpgradesSection({
           <div className="row space">
             <div>
               <p className="eyebrow">영구 Luck</p>
-              <h4>Shards로 운 올리기</h4>
+              <h4>Prestige로 운 올리기</h4>
               <p className="muted">총 Luck {totalLuck.toFixed(0)} / 100 · 영구 {permLuck}/{permLuckCap}</p>
             </div>
             <div className="upgrade-actions">
@@ -103,7 +96,7 @@ export function UpgradesSection({
               >
                 {permLuck >= permLuckCap
                   ? 'MAX'
-                  : `+1 Luck (${formatNumber(nextPermLuckCost)} Shard)`}
+                  : `+1 Luck (${formatNumber(nextPermLuckCost)} PTG)`}
               </button>
             </div>
           </div>

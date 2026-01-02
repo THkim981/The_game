@@ -89,6 +89,6 @@ function applyOutcome(params: {
 
   gainInsight(insightGain)
   shiftLuck(40)
-  pushToast('bad', '대실패', `쿨다운 · Insight +${insightGain.toFixed(1)} · Luck 크게 상승`)
+  pushToast('bad', '대실패', `Insight +${insightGain.toFixed(1)} · Luck 크게 상승`)
   triggerFx('bad')
 }

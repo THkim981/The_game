@@ -1,14 +1,22 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { initialBuffs, initialLevels, initialResources, riskTiers, upgradeHelp } from '../constants'
 import type { Buff, Resources, RiskTier, Tone, UpgradeKey } from '../types'
 import { adjustProbabilities, computePrestigeGain } from './gameCalculations'
-import { buildGameActions } from './gameActions'
-import { createRollOutcome } from './riskHandlers'
 import { useElapsedTimer } from './useElapsedTimer'
 import { useGameDerived } from './useGameDerived'
+import { buildSavedGameState, buildStatsPatch, computeActiveGambleMultiplier } from './profilePersistence'
+import { useAutoSaveProfile } from './useAutoSaveProfile'
+import { useGameActions } from './useGameActions'
+import { useLoadProfileSave } from './useLoadProfileSave'
+import { useMaxCashTracking } from './useMaxCashTracking'
+import { useRankPrompt } from './useRankPrompt'
+import { useResetProgress } from './useResetProgress'
+import { useRollOutcome } from './useRollOutcome'
 import { useResourceTick } from './useResourceTick'
+import { postScore, saveProfileSave, saveProfileStats } from '../utils/profileStorage'
+import type { ProfileStats, SavedGameState } from '../utils/profileStorage'
 
-export function useGameLogic() {
+export function useGameLogic(profileId: string) {
   const [resources, setResources] = useState<Resources>(initialResources)
   const [maxCash, setMaxCash] = useState(initialResources.cash)
   const [runStartMs, setRunStartMs] = useState(() => Date.now())
@@ -24,11 +32,10 @@ export function useGameLogic() {
   const resourcesRef = useRef<Resources>(initialResources)
   const startTime = useRef(Date.now())
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
+  const elapsedSecondsRef = useRef(0)
   const [cashHistory, setCashHistory] = useState<number[]>([initialResources.cash])
   const sampleAccumulator = useRef(0)
-  const [toast, setToast] = useState<null | { title: string; detail: string; tone: Tone; key: number }>(
-    null,
-  )
+  const [toast, setToast] = useState<null | { title: string; detail: string; tone: Tone; key: number }>(null)
   const toastTimeout = useRef<number | null>(null)
   const [fx, setFx] = useState<null | { tone: Tone; key: number }>(null)
   const [openHelp, setOpenHelp] = useState<UpgradeKey | null>(null)
@@ -36,17 +43,27 @@ export function useGameLogic() {
   const rankTargetCash = 1e100
 
   resourcesRef.current = resources
+  elapsedSecondsRef.current = elapsedSeconds
 
-  const {
-    buffMultiplier,
-    incomeMultiplier,
-    incomeInsightBonus,
-    conversionCosts,
-    chipsRatePerSec,
-    heatFullChargeSeconds,
-    heatRatePerSec,
-    effectiveUpgrades,
-  } = useGameDerived({ resources, levels, permBoost, buffs })
+  useLoadProfileSave(profileId, {
+    setResources,
+    setLevels,
+    setBuffs,
+    buffsRef,
+    setPermBoost,
+    setPermLuck,
+    setMaxCash,
+    setCashHistory,
+    setRunStartMs,
+    setRunMaxCash,
+    setRankPromptOpen,
+    setRankPromptSeconds,
+    startTimeRef: startTime,
+    setElapsedSeconds,
+  })
+
+  const { buffMultiplier, incomeMultiplier, incomeInsightBonus, conversionCosts, chipsRatePerSec, heatFullChargeSeconds, heatRatePerSec, effectiveUpgrades } =
+    useGameDerived({ resources, levels, permBoost, buffs })
 
   useResourceTick({
     levels,
@@ -63,81 +80,76 @@ export function useGameLogic() {
 
   useElapsedTimer(startTime, setElapsedSeconds)
 
-  useEffect(() => {
-    setMaxCash((prev) => (resources.cash > prev ? resources.cash : prev))
-    setRunMaxCash((prev) => (resources.cash > prev ? resources.cash : prev))
-  }, [resources.cash])
+  useMaxCashTracking({ cash: resources.cash, setMaxCash, setRunMaxCash })
 
-  useEffect(() => {
-    if (rankPromptOpen) return
-    if (rankPromptSeconds !== null) return
-    if (runMaxCash < rankTargetCash) return
+  useRankPrompt({
+    profileId,
+    enabled: true,
+    rankTargetCash,
+    runMaxCash,
+    runStartMs,
+    rankPromptOpen,
+    rankPromptSeconds,
+    setRankPromptSeconds,
+    setRankPromptOpen,
+  })
 
-    const seconds = Math.max(0, (Date.now() - runStartMs) / 1000)
-    setRankPromptSeconds(seconds)
-    setRankPromptOpen(true)
-  }, [rankPromptOpen, rankPromptSeconds, runMaxCash, runStartMs])
-
-  const actions = useMemo(
-    () =>
-      buildGameActions({
-        getResources: () => resourcesRef.current,
-        setResources,
-        levels,
-        setLevels,
-        setBuffs,
-        buffsRef,
-        setPermBoost,
-        permLuck,
-        setPermLuck,
-        setSnapKey,
-        setOpenHelp,
-        setFx,
-        setToast,
-        toastTimeout,
-        conversionCosts,
-        effectiveUpgrades,
-        initialResources,
-        initialLevels,
-        onAfterPrestige: () => {
-          setRunStartMs(Date.now())
-          setRunMaxCash(initialResources.cash)
-          setRankPromptOpen(false)
-          setRankPromptSeconds(null)
-        },
-      }),
-    [
-      conversionCosts,
-      effectiveUpgrades,
+  const getSaveState = useCallback((): SavedGameState => {
+    return buildSavedGameState({
+      resources: resourcesRef.current,
       levels,
+      buffs: buffsRef.current,
+      permBoost,
       permLuck,
-      setFx,
-      setOpenHelp,
-      setToast,
-      setBuffs,
-      setLevels,
-      setPermBoost,
-      setPermLuck,
-      setResources,
-      setSnapKey,
-      toastTimeout,
-    ],
-  )
+      maxCash,
+      cashHistory,
+      runStartMs,
+      runMaxCash,
+      rankPromptSeconds,
+      sessionElapsedSeconds: elapsedSecondsRef.current,
+    })
+  }, [cashHistory, levels, maxCash, permBoost, permLuck, rankPromptSeconds, runMaxCash, runStartMs])
 
-  const {
-    pushToast,
-    triggerFx,
-    addBuff,
-    handlePurchase,
-    handlePurchaseBulk,
-    convertCashToChips,
-    convertCashToHeat,
-    grantResources,
-    performPrestige,
-    buyPermanentLuck,
-    permLuckCap,
-    nextPermLuckCost,
-  } = actions
+  const getStatsPatch = useCallback((): Partial<ProfileStats> => {
+    return buildStatsPatch({
+      activeGambleMultiplier: computeActiveGambleMultiplier(buffMultiplier, permBoost),
+      prestige: resourcesRef.current.prestige,
+      permLuck,
+      cash: resourcesRef.current.cash,
+    })
+  }, [buffMultiplier, permBoost, permLuck])
+
+  useAutoSaveProfile({ profileId, getSaveState, getStatsPatch, intervalMs: 1500 })
+
+  const actions = useGameActions({
+    getResources: () => resourcesRef.current,
+    setResources,
+    levels,
+    setLevels,
+    setBuffs,
+    buffsRef,
+    setPermBoost,
+    permLuck,
+    setPermLuck,
+    setSnapKey,
+    setOpenHelp,
+    setFx,
+    setToast,
+    toastTimeout,
+    conversionCosts,
+    effectiveUpgrades,
+    initialResources,
+    initialLevels,
+    onAfterPrestige: () => {
+      setRunStartMs(Date.now())
+      setRunMaxCash(initialResources.cash)
+      setRankPromptOpen(false)
+      setRankPromptSeconds(null)
+    },
+  })
+
+  const { pushToast, triggerFx, addBuff, handlePurchase, handlePurchaseBulk, convertCashToChips, convertCashToHeat, grantResources, performPrestige, buyPermanentLuck, permLuckCap, nextPermLuckCost } =
+    actions
 
   const saveRankTime = useCallback(() => {
     if (rankPromptSeconds === null) {
@@ -145,18 +157,64 @@ export function useGameLogic() {
       return
     }
 
-    try {
-      const key = 'cashRankings'
-      const raw = window.localStorage.getItem(key)
-      const parsed = raw ? (JSON.parse(raw) as Array<{ seconds: number; recordedAt: string }>) : []
-      const next = [...parsed, { seconds: rankPromptSeconds, recordedAt: new Date().toISOString() }]
-      window.localStorage.setItem(key, JSON.stringify(next))
-    } catch {
-      // ignore storage failures
-    }
+    const safeUpgradeLevel = levels.printer + levels.vault + levels.battery + levels.refinery
+    const activeGambleMultiplier = computeActiveGambleMultiplier(buffMultiplier, permBoost)
+    const prestigeElapsedSeconds = Math.max(0, (Date.now() - runStartMs) / 1000)
+
+    void postScore(profileId, rankPromptSeconds, {
+      luck: resources.luck + permLuck,
+      activeGambleMultiplier,
+      elapsedSeconds,
+      prestigeElapsedSeconds,
+      prestige: resources.prestige,
+      cash: resources.cash,
+      gold: resources.chips,
+      insight: resources.insight,
+      heat: resources.heat,
+      safeUpgradeLevel,
+    }).catch(() => {
+      // ignore
+    })
 
     setRankPromptOpen(false)
-  }, [rankPromptSeconds])
+  }, [buffMultiplier, elapsedSeconds, levels, permBoost, permLuck, profileId, rankPromptSeconds, resources, runStartMs])
+
+  const manualSave = useCallback(async () => {
+    try {
+      await saveProfileStats(profileId, getStatsPatch())
+      const saved = getSaveState()
+      await saveProfileSave(profileId, saved)
+
+      pushToast('good', '수동 저장', '저장 완료')
+    } catch (e) {
+      const message = e instanceof Error ? e.message : '저장 실패'
+      pushToast('bad', '수동 저장', message)
+    }
+  }, [getSaveState, getStatsPatch, profileId, pushToast])
+
+  const resetProgress = useResetProgress({
+    profileId,
+    setResources,
+    setLevels,
+    setBuffs,
+    buffsRef,
+    setPermBoost,
+    setPermLuck,
+    setMaxCash,
+    setCashHistory,
+    setRunStartMs,
+    setRunMaxCash,
+    setRankPromptOpen,
+    setRankPromptSeconds,
+    startTimeRef: startTime,
+    setElapsedSeconds,
+    sampleAccumulatorRef: sampleAccumulator,
+    toastTimeoutRef: toastTimeout,
+    setOpenHelp,
+    setToast,
+    setFx,
+    bumpSnapKey: () => setSnapKey((k) => k + 1),
+  })
 
   const dismissRankTime = useCallback(() => {
     setRankPromptOpen(false)
@@ -169,26 +227,15 @@ export function useGameLogic() {
     [permLuck, resources.luck],
   )
 
-  const rollOutcome = useMemo(
-    () =>
-      createRollOutcome({
-        getResources: () => resourcesRef.current,
-        spendResources: (tier) =>
-          setResources((prev) => ({ ...prev, chips: prev.chips - tier.cost, heat: 0 })),
-        gainInsight: (amount) => setResources((prev) => ({ ...prev, insight: prev.insight + amount })),
-        shiftLuck: (delta) =>
-          setResources((prev) => ({
-            ...prev,
-            luck: Math.max(0, Math.min(100, prev.luck + delta)),
-          })),
-        addBuff,
-        addPermBoost: (delta) => setPermBoost((p) => p + delta),
-        pushToast,
-        triggerFx,
-        adjustProbs,
-      }),
-    [adjustProbs, addBuff, pushToast, triggerFx, setResources, setPermBoost],
-  )
+  const rollOutcome = useRollOutcome({
+    resourcesRef,
+    setResources,
+    addBuff,
+    setPermBoost,
+    pushToast,
+    triggerFx,
+    adjustProbs,
+  })
 
   return {
     state: {
@@ -233,6 +280,8 @@ export function useGameLogic() {
       buyPermanentLuck,
       saveRankTime,
       dismissRankTime,
+      manualSave,
+      resetProgress,
     },
     data: {
       upgrades: effectiveUpgrades,

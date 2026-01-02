@@ -35,7 +35,13 @@ export function useResourceTick({
     const tick = () => {
       setBuffs((prev) => {
         const now = Date.now()
-        const next = prev.filter((buff) => buff.expiresAt > now)
+        // 대부분은 '지속 버프'라 만료가 없습니다. 유한 expiresAt이 있을 때만 정리합니다.
+        if (!prev.some((buff) => Number.isFinite(buff.expiresAt) && buff.expiresAt <= now)) {
+          buffsRef.current = prev
+          return prev
+        }
+
+        const next = prev.filter((buff) => !Number.isFinite(buff.expiresAt) || buff.expiresAt > now)
         buffsRef.current = next
         return next
       })

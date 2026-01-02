@@ -89,7 +89,7 @@ export function HeroHeader({
                 snapKey={snapKey}
                 disableAnimation={animationsDisabled}
               />{' '}
-              Shards
+              PTG
             </strong>
             <p className="muted" style={{ marginTop: 4 }}>
               예상 획득: {formatNumber(prestigeGain)}

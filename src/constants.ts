@@ -25,15 +25,15 @@ export const upgrades: Upgrade[] = [
   },
   {
     key: 'battery',
-    name: '오프라인 배터리',
+    name: 'Heat 배터리',
     description: 'Heat 충전 +3%/레벨',
     baseCost: 260,
     growth: 1.16,
   },
   {
     key: 'refinery',
-    name: '칩 정제',
-    description: 'Chips 생성 +10%p/레벨',
+    name: 'Gold 정제',
+    description: 'Gold 생성 +10%p/레벨',
     baseCost: 200,
     growth: 1.15,
   },
@@ -43,7 +43,7 @@ export const upgradeHelp: Record<UpgradeKey, string> = {
   printer: '기본 수익: I = B * (1 + 0.10*Lv). B=10 C/s. 레벨당 +10% 가산.',
   vault: '곱연산 보정: 전체 수익에 (1 + 0.05*Lv) 곱. 다른 보정과 곱연산으로 중첩.',
   battery: 'Heat 충전: 기본 100/180초 → (1 + 0.03*Lv) 배. 도박 버튼 활성 주기가 짧아짐.',
-  refinery: 'Chips 생성: 기본 1G/30s → (1 + 0.10*Lv) 배. 최소 생성량을 서서히 올려줌.',
+  refinery: 'Gold 생성: 기본 1G/30s → (1 + 0.10*Lv) 배. 최소 생성량을 서서히 올려줌.',
 }
 
 export const riskTiers: RiskTier[] = [

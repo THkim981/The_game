@@ -7,16 +7,17 @@ interface ModalProps {
   onClose: () => void
   children: ReactNode
   footer?: ReactNode
+  hideClose?: boolean
 }
 
-export function Modal({ open, title, onClose, children, footer }: ModalProps) {
+export function Modal({ open, title, onClose, children, footer, hideClose = false }: ModalProps) {
   if (!open) return null
 
   const labelId = useId()
 
   const handleBackdropClick = (event: MouseEvent<HTMLDivElement>) => {
     if (event.target === event.currentTarget) {
-      onClose()
+      if (!hideClose) onClose()
     }
   }
 
@@ -31,7 +32,9 @@ export function Modal({ open, title, onClose, children, footer }: ModalProps) {
       >
         <div className="modal-header">
           <h3 id={labelId}>{title}</h3>
-          <button className="ghost pill" onClick={onClose} aria-label="설정 창 닫기">닫기</button>
+          {hideClose ? null : (
+            <button className="ghost pill" onClick={onClose} aria-label="설정 창 닫기">✕</button>
+          )}
         </div>
         <div className="modal-body">{children}</div>
         {footer ? <div className="modal-footer">{footer}</div> : null}

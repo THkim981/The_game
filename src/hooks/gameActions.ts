@@ -48,6 +48,7 @@ export function buildGameActions({
   initialLevels,
   onAfterPrestige,
 }: ActionDeps) {
+  const FAR_FUTURE_MS = 8_640_000_000_000_000 // ~= max JS Date
   const pushToast = (tone: Tone, title: string, detail: string) => {
     if (toastTimeout.current) window.clearTimeout(toastTimeout.current)
     const key = Date.now()
@@ -60,11 +61,15 @@ export function buildGameActions({
     window.setTimeout(() => setFx(null), 900)
   }
 
-  const addBuff = (multiplier: number, minutes: number) => {
-    const expiresAt = Date.now() + minutes * 60 * 1000
-    const buff: Buff = { id: `${Date.now()}-${Math.random()}`, multiplier, expiresAt }
+  const addBuff = (multiplier: number, _minutes: number) => {
+    // 지속 버프: 만료 없음(사실상 영구). 도박 성공/대성공 시 부스트는 '중첩(곱)'됩니다.
+    // NOTE: Infinity는 JSON.stringify 시 null이 되어 저장/복원이 깨지므로 far-future timestamp를 사용.
     setBuffs((prev) => {
-      const next = [...prev, buff]
+      const prevProduct = prev.reduce((acc, b) => acc * b.multiplier, 1)
+      const nextMultiplier = prevProduct * multiplier
+      const next: Buff[] = [
+        { id: `${Date.now()}-${Math.random()}`, multiplier: nextMultiplier, expiresAt: FAR_FUTURE_MS },
+      ]
       buffsRef.current = next
       return next
     })
@@ -148,7 +153,7 @@ export function buildGameActions({
     setSnapKey((k) => k + 1)
     setOpenHelp(null)
     setFx(null)
-    setToast({ tone: 'good', title: '프리스티지!', detail: `+${gain} Shard 획득`, key: Date.now() })
+    setToast({ tone: 'good', title: '프리스티지!', detail: `+${gain} PTG 획득`, key: Date.now() })
     onAfterPrestige?.()
   }
 

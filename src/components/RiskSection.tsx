@@ -33,7 +33,7 @@ export function RiskSection({ riskTiers, resources, adjustProbs, rollOutcome, se
                   <p className="eyebrow">{tier.label}</p>
                   <h4>Gold {tier.cost} 필요</h4>
                   <p className="muted">
-                    부스트 {tier.reward.successBuff.toFixed(2)}x ~ {tier.reward.jackpotBuff.toFixed(2)}x / {tier.reward.buffMinutes}분
+                    부스트 {tier.reward.successBuff.toFixed(2)}x ~ {tier.reward.jackpotBuff.toFixed(2)}x (지속·중첩)
                   </p>
                 </div>
                 <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
