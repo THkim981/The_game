@@ -11,29 +11,51 @@ import {
 } from '../../../_lib/api'
 
 export const onRequest: PagesFunction<Env> = async ({ request, env, params }) => {
-  if (isPreflight(request)) return new Response(null, { status: 204 })
+  try {
+    if (isPreflight(request)) return new Response(null, { status: 204 })
 
-  const profileId = sanitizeProfileId((params as any)?.id)
-  if (!profileId) return json({ error: 'Invalid profileId' }, { status: 400 })
+    if (!env?.DB) {
+      return json(
+        {
+          error: 'D1 binding missing',
+          hint: 'In Cloudflare Pages project settings, bind a D1 database to variable name "DB" for both Production and Preview.',
+        },
+        { status: 500 },
+      )
+    }
 
-  const method = request.method.toUpperCase()
+    const profileId = sanitizeProfileId((params as any)?.id)
+    if (!profileId) return json({ error: 'Invalid profileId' }, { status: 400 })
 
-  if (method === 'GET') {
-    await ensureProfile(env, profileId)
-    return json({ state: await getSave(env, profileId) })
+    const method = request.method.toUpperCase()
+
+    if (method === 'GET') {
+      await ensureProfile(env, profileId)
+      return json({ state: await getSave(env, profileId) })
+    }
+
+    if (method === 'PUT') {
+      const body = await readJson(request)
+      const state = body?.state
+      if (!state || typeof state !== 'object') return json({ error: 'Missing state' }, { status: 400 })
+
+      await ensureProfile(env, profileId)
+      const meta = await upsertSave(env, profileId, state)
+      const cash = numberOrUndefined((state as any)?.resources?.cash) ?? 0
+      await addSnapshot(env, profileId, state, cash)
+      return json({ ok: true, ...meta })
+    }
+
+    return json({ error: 'Not found' }, { status: 404 })
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    return json(
+      {
+        error: 'Internal Server Error',
+        message,
+        hint: 'Most common causes are: (1) Pages is bound to a different D1 database than you migrated, or (2) migrations were not applied to the bound database.',
+      },
+      { status: 500 },
+    )
   }
-
-  if (method === 'PUT') {
-    const body = await readJson(request)
-    const state = body?.state
-    if (!state || typeof state !== 'object') return json({ error: 'Missing state' }, { status: 400 })
-
-    await ensureProfile(env, profileId)
-    const meta = await upsertSave(env, profileId, state)
-    const cash = numberOrUndefined((state as any)?.resources?.cash) ?? 0
-    await addSnapshot(env, profileId, state, cash)
-    return json({ ok: true, ...meta })
-  }
-
-  return json({ error: 'Not found' }, { status: 404 })
 }
