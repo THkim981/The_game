@@ -5,7 +5,6 @@ export type BuildSaveInput = {
   resources: Resources
   levels: Record<UpgradeKey, number>
   buffs: Buff[]
-  permBoost: number
   permLuck: number
   maxCash: number
   cashHistory: number[]
@@ -22,7 +21,6 @@ export function buildSavedGameState(input: BuildSaveInput): SavedGameState {
     resources: input.resources,
     levels: input.levels,
     buffs: input.buffs,
-    permBoost: input.permBoost,
     permLuck: input.permLuck,
     maxCash: input.maxCash,
     cashHistory: input.cashHistory,
@@ -33,8 +31,8 @@ export function buildSavedGameState(input: BuildSaveInput): SavedGameState {
   }
 }
 
-export function computeActiveGambleMultiplier(buffMultiplier: number, permBoost: number): number {
-  return buffMultiplier * (1 + permBoost)
+export function computeActiveGambleMultiplier(buffMultiplier: number): number {
+  return buffMultiplier
 }
 
 export function buildStatsPatch(input: {

@@ -6,21 +6,20 @@ import { computeConversionCosts, computeConversionCostMultiplier, computeIncomeM
 interface DerivedParams {
   resources: Resources
   levels: Record<UpgradeKey, number>
-  permBoost: number
   buffs: Buff[]
 }
 
-export function useGameDerived({ resources, levels, permBoost, buffs }: DerivedParams) {
+export function useGameDerived({ resources, levels, buffs }: DerivedParams) {
   const buffMultiplier = useMemo(() => buffs.reduce((acc, buff) => acc * buff.multiplier, 1), [buffs])
 
   const incomeComponents = useMemo(
-    () => getIncomeComponents({ levels, permBoost, resources, buffMultiplier }),
-    [buffMultiplier, levels, permBoost, resources],
+    () => getIncomeComponents({ levels, resources, buffMultiplier }),
+    [buffMultiplier, levels, resources],
   )
 
   const incomeMultiplier = useMemo(
-    () => computeIncomeMultiplier({ levels, permBoost, resources, buffMultiplier }),
-    [buffMultiplier, levels, permBoost, resources],
+    () => computeIncomeMultiplier({ levels, resources, buffMultiplier }),
+    [buffMultiplier, levels, resources],
   )
 
   const conversionCostMultiplier = useMemo(

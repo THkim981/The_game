@@ -1,11 +1,10 @@
 import { useEffect, useRef } from 'react'
 import type { Upgrade, UpgradeKey } from '../types'
 
-export type HoveredButton = { key: UpgradeKey; type: 'single' | 'bulk' } | null
+export type AutoBuyTarget = { key: UpgradeKey; type: 'single' | 'bulk' }
 
 interface AutoBuyParams {
-  enabled: boolean
-  hoveredButton: HoveredButton
+  targets: AutoBuyTarget[]
   upgrades: Upgrade[]
   levels: Record<UpgradeKey, number>
   cash: number
@@ -14,8 +13,7 @@ interface AutoBuyParams {
 }
 
 export function useAutoBuy({
-  enabled,
-  hoveredButton,
+  targets,
   upgrades,
   levels,
   cash,
@@ -25,29 +23,37 @@ export function useAutoBuy({
   const intervalRef = useRef<number | null>(null)
 
   useEffect(() => {
-    if (enabled && hoveredButton) {
+    if (targets.length > 0) {
       intervalRef.current = window.setInterval(() => {
-        const upgrade = upgrades.find((u) => u.key === hoveredButton.key)
-        if (!upgrade) return
+        for (const target of targets) {
+          const upgrade = upgrades.find((u) => u.key === target.key)
+          if (!upgrade) continue
 
-        const level = levels[upgrade.key] ?? 0
-        const locked = upgrade.maxLevel ? level >= upgrade.maxLevel : false
+          const level = levels[upgrade.key] ?? 0
+          const locked = upgrade.maxLevel ? level >= upgrade.maxLevel : false
 
-        if (hoveredButton.type === 'single') {
-          const cost = upgrade.baseCost * Math.pow(upgrade.growth, level)
-          if (!locked && cash >= cost) {
-            handlePurchase(upgrade.key)
+          if (target.type === 'single') {
+            const cost = upgrade.baseCost * Math.pow(upgrade.growth, level)
+            if (!locked && cash >= cost) {
+              handlePurchase(upgrade.key)
+            }
           }
-        }
 
-        if (hoveredButton.type === 'bulk') {
-          const bulkCount = locked ? 0 : upgrade.maxLevel ? Math.max(0, Math.min(10, upgrade.maxLevel - level)) : 10
-          let bulkCost = 0
-          for (let i = 0; i < bulkCount; i += 1) {
-            bulkCost += upgrade.baseCost * Math.pow(upgrade.growth, level + i)
-          }
-          if (bulkCount > 0 && cash >= bulkCost) {
-            handlePurchaseBulk(upgrade.key, 10)
+          if (target.type === 'bulk') {
+            const bulkCount = locked
+              ? 0
+              : upgrade.maxLevel
+                ? Math.max(0, Math.min(10, upgrade.maxLevel - level))
+                : 10
+
+            let bulkCost = 0
+            for (let i = 0; i < bulkCount; i += 1) {
+              bulkCost += upgrade.baseCost * Math.pow(upgrade.growth, level + i)
+            }
+
+            if (bulkCount > 0 && cash >= bulkCost) {
+              handlePurchaseBulk(upgrade.key, 10)
+            }
           }
         }
       }, 100)
@@ -65,5 +71,5 @@ export function useAutoBuy({
     }
 
     return undefined
-  }, [enabled, hoveredButton, upgrades, levels, cash, handlePurchase, handlePurchaseBulk])
+  }, [targets, upgrades, levels, cash, handlePurchase, handlePurchaseBulk])
 }

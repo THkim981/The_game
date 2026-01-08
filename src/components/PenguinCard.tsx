@@ -6,11 +6,10 @@ type PenguinCardProps = {
   level: number
   basePath?: string
   note?: string
-  mapEnabled?: boolean
   allowBrowseDown?: boolean
 }
 
-export function PenguinCard({ level, basePath = 'penguin', note, mapEnabled = false, allowBrowseDown = false }: PenguinCardProps) {
+export function PenguinCard({ level, basePath = 'penguin', note, allowBrowseDown = false }: PenguinCardProps) {
   const [variantIndex, setVariantIndex] = useState(0)
   const [exhausted, setExhausted] = useState(false)
   const maxLevel = useMemo(() => Math.max(1, Math.floor(level)), [level])
@@ -58,7 +57,6 @@ export function PenguinCard({ level, basePath = 'penguin', note, mapEnabled = fa
           <p className="eyebrow">펭귄 진화</p>
           <h4>귀여움 진행도</h4>
           <p className="muted">{description}</p>
-          {mapEnabled && <p className="muted" style={{ marginTop: 6 }}>펭귄 맵 활성화 상태 (모션 준비중)</p>}
         </div>
         <div className="penguin-level">
           <span className="muted">현재</span>

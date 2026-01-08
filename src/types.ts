@@ -53,7 +53,6 @@ export type RiskTier = {
       crash: number
     }
     chipRefund: { neutral: number }
-    permBoost?: number
   }
 }
 

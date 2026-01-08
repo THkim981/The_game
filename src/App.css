@@ -62,6 +62,23 @@
   font-size: 13px;
 }
 
+.term-help {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  font-size: 11px;
+  line-height: 1;
+  text-decoration: none;
+  cursor: help;
+  opacity: 0.9;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
 .summary strong {
   display: block;
   color: #fff;

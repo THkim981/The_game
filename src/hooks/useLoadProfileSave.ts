@@ -9,7 +9,6 @@ type LoadTargets = {
   setLevels: (l: Record<UpgradeKey, number>) => void
   setBuffs: (b: Buff[]) => void
   buffsRef: MutableRefObject<Buff[]>
-  setPermBoost: (v: number) => void
   setPermLuck: (v: number) => void
   setMaxCash: (v: number) => void
   setCashHistory: (v: number[]) => void
@@ -56,7 +55,6 @@ export function useLoadProfileSave(profileId: ProfileId, targets: LoadTargets) {
         const buffs = sanitizeBuffs(loaded.buffs)
         targets.setBuffs(buffs)
         targets.buffsRef.current = buffs
-        targets.setPermBoost(loaded.permBoost)
         targets.setPermLuck(loaded.permLuck)
         targets.setMaxCash(loaded.maxCash)
         targets.setCashHistory(loaded.cashHistory.length > 0 ? loaded.cashHistory : [loaded.resources.cash])

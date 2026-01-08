@@ -5,7 +5,6 @@ import { AnimatedNumber } from './AnimatedNumber'
 import { CollapsiblePanel } from './CollapsiblePanel'
 import { Modal } from './Modal'
 import { PenguinCard } from './PenguinCard'
-import { PenguinMap } from './PenguinMap'
 import { Sparkline } from './Sparkline'
 
 const PLAY_TIP_PAGES: Array<{ title: string; items: Array<string | { code: string }> }> = [
@@ -56,7 +55,7 @@ const PLAY_TIP_PAGES: Array<{ title: string; items: Array<string | { code: strin
       '부스트는 시간 제한 없이 지속되며, 성공/대성공마다 계속 중첩됩니다(곱연산).',
       '핵심: Heat 배터리로 도박 템포를 올리고, 골드 정제로 도박 비용을 유지하세요.',
       '목표별 추천: Insight가 급하면 낮음/중간 티어로 안정 파밍 → 여유가 생기면 고티어 도전.',
-      '극단/초극단은 “영구 보너스(permBoost)”를 노리는 구간입니다. Gold와 멘탈 여유가 있을 때만 시도하세요.',
+      '극단/초극단은 변동성이 큰 구간입니다. Gold와 멘탈 여유가 있을 때만 시도하세요.',
       '한 번에 몰빵하기보다: Heat가 찰 때마다 1회씩 반복해서 편차를 줄이는 편이 안정적입니다.',
     ],
   },
@@ -67,7 +66,7 @@ const PLAY_TIP_PAGES: Array<{ title: string; items: Array<string | { code: strin
       '팁: Luck이 높아졌을 때가 “성공 확률이 상대적으로 좋은 타이밍”이라 고티어 도전을 고려할 만합니다.',
       'Insight는 로그 기반 보너스로 수익을 올려줍니다. 초반 정체 구간에서 특히 체감이 큽니다.',
       { code: 'Insight 보너스 = 1 + 0.12 * log10(1 + Insight)' },
-      '정리: (안전 업그레이드로 Cash 성장) + (도박으로 Insight/permBoost) 두 축을 번갈아 굴리면 안정적입니다.',
+      '정리: (안전 업그레이드로 Cash 성장) + (도박으로 Insight) 두 축을 번갈아 굴리면 안정적입니다.',
     ],
   },
   {
@@ -78,7 +77,7 @@ const PLAY_TIP_PAGES: Array<{ title: string; items: Array<string | { code: strin
       '프리스티지는 수익 보너스뿐 아니라 Heat/Gold 생성 속도도 올려 “도박 템포”를 빠르게 합니다.',
       { code: '효과(소득) = 1 + 0.05 * log10(1 + Prestige)' },
       { code: '속도(Heat/Gold) = (1 + 0.02 * Prestige)' },
-      '리셋 주의: Cash/Gold/Heat/Luck/Insight/업그레이드/버프/permBoost는 초기화되며, Prestige는 누적(permLuck은 유지).',
+      '리셋 주의: Cash/Gold/Heat/Luck/Insight/업그레이드/버프는 초기화되며, Prestige는 누적(permLuck은 유지).',
     ],
   },
 ]
@@ -102,7 +101,6 @@ interface ResourceSectionProps {
   cashHistory: number[]
   totalLuck: number
   permLuck: number
-  penguinMapEnabled: boolean
 }
 
 export function ResourceSection({
@@ -124,7 +122,6 @@ export function ResourceSection({
   cashHistory,
   totalLuck,
   permLuck,
-  penguinMapEnabled,
 }: ResourceSectionProps) {
   const [tipsOpen, setTipsOpen] = useState(false)
   const [tipsPage, setTipsPage] = useState(0)
@@ -208,25 +205,11 @@ export function ResourceSection({
           <p className="muted">실험 실패가 Insight를 쌓습니다. 높은 티어일수록 더 위험하지만 실패 Insight 보상도 더 큽니다.</p>
         </div>
         {featureView === 'penguin' ? (
-          penguinMapEnabled ? (
-            <div className="card spark-card">
-              <div className="row space">
-                <div>
-                  <p className="eyebrow">펭귄 맵</p>
-                  <h4>움직임 프로토타입</h4>
-                  <p className="muted">캔버스 클릭으로 반응합니다</p>
-                </div>
-              </div>
-                <PenguinMap backgroundSrc={`${import.meta.env.BASE_URL}penguin/map-bg.png`} showGrid={false} />
-            </div>
-          ) : (
-            <PenguinCard
-              level={penguinLevel}
-              note={`최대 Cash 기준 진화: 1e10, 1e16, 1e28, 1e40, 1e51 달성 시 Lv 업.`}
-              mapEnabled={penguinMapEnabled}
-              allowBrowseDown
-            />
-          )
+          <PenguinCard
+            level={penguinLevel}
+            note={`최대 Cash 기준 진화: 1e10, 1e16, 1e28, 1e40, 1e51 달성 시 Lv 업.`}
+            allowBrowseDown
+          />
         ) : (
           <div className="card spark-card">
             <div className="row space">

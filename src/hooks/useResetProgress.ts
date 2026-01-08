@@ -10,7 +10,6 @@ type ResetParams = {
   setLevels: (l: Record<UpgradeKey, number>) => void
   setBuffs: (b: Buff[]) => void
   buffsRef: MutableRefObject<Buff[]>
-  setPermBoost: (v: number) => void
   setPermLuck: (v: number) => void
   setMaxCash: (v: number) => void
   setCashHistory: (v: number[]) => void
@@ -35,7 +34,6 @@ export function useResetProgress(params: ResetParams) {
     setLevels,
     setBuffs,
     buffsRef,
-    setPermBoost,
     setPermLuck,
     setMaxCash,
     setCashHistory,
@@ -73,7 +71,6 @@ export function useResetProgress(params: ResetParams) {
     setLevels(initialLevels)
     setBuffs(initialBuffs)
     buffsRef.current = initialBuffs
-    setPermBoost(0)
     setPermLuck(0)
     setMaxCash(initialResources.cash)
     setCashHistory([initialResources.cash])
@@ -98,7 +95,6 @@ export function useResetProgress(params: ResetParams) {
     setLevels,
     setBuffs,
     buffsRef,
-    setPermBoost,
     setPermLuck,
     setMaxCash,
     setCashHistory,

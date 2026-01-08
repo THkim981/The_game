@@ -10,12 +10,13 @@ import { RiskSection } from './components/RiskSection'
 import { FxOverlay, Toast } from './components/ToastFx'
 import { UpgradesSection } from './components/UpgradesSection'
 import { BASE_INCOME, HEAT_MAX } from './constants'
-import type { HoveredButton } from './hooks/useAutoBuy'
+import type { AutoBuyTarget } from './hooks/useAutoBuy'
 import { useAutoBuy } from './hooks/useAutoBuy'
 import { useGameLogic } from './hooks/useGameLogic'
-import type { RiskKey } from './types'
+import type { RiskKey, UpgradeKey } from './types'
 import { getOrCreateAnonUserId } from './utils/anonUser'
-import { formatNumber } from './utils/number'
+import type { NumberFormatStyle } from './utils/number'
+import { formatNumber, getNumberFormatStyle, setNumberFormatStyle } from './utils/number'
 
 type GameAppProps = {
   profileId: string
@@ -23,7 +24,7 @@ type GameAppProps = {
 
 function GameApp({ profileId }: GameAppProps) {
   const {
-    state: { resources, levels, toast, fx, openHelp, permBoost, permLuck, cashHistory },
+    state: { resources, levels, toast, fx, openHelp, permLuck, cashHistory },
     derived: {
       incomeMultiplier,
       buffMultiplier,
@@ -48,6 +49,7 @@ function GameApp({ profileId }: GameAppProps) {
       rollOutcome,
       convertCashToChips,
       convertCashToHeat,
+      setCashAbsolute,
       performPrestige,
       buyPermanentLuck,
       saveRankTime,
@@ -61,9 +63,11 @@ function GameApp({ profileId }: GameAppProps) {
   const penguinCashThresholds = useMemo(() => [1e10, 1e16, 1e28, 1e40, 1e51], [])
   const penguinLevel = useMemo(() => {
     let level = 1
-    for (let i = 1; i < penguinCashThresholds.length; i += 1) {
+    // Each threshold unlocks the next level.
+    // e.g. 1e10 => Lv2, 1e16 => Lv3, ... 1e51 => Lv6
+    for (let i = 0; i < penguinCashThresholds.length; i += 1) {
       if (maxCash >= penguinCashThresholds[i]) {
-        level = i + 1 // threshold index 1 unlocks level 2
+        level = i + 2
       } else {
         break
       }
@@ -71,19 +75,47 @@ function GameApp({ profileId }: GameAppProps) {
     return Math.min(penguinCashThresholds.length + 1, Math.max(1, level))
   }, [maxCash, penguinCashThresholds])
 
-  const [autoBuyEnabled, setAutoBuyEnabled] = useState(false)
-  const [hoveredButton, setHoveredButton] = useState<HoveredButton>(null)
+  const [autoBuyByButton, setAutoBuyByButton] = useState<Record<UpgradeKey, { single: boolean; bulk: boolean }>>(() => ({
+    printer: { single: false, bulk: false },
+    vault: { single: false, bulk: false },
+    battery: { single: false, bulk: false },
+    refinery: { single: false, bulk: false },
+  }))
+
+  const autoBuyTargets = useMemo<AutoBuyTarget[]>(() => {
+    const targets: AutoBuyTarget[] = []
+    for (const upgrade of upgrades) {
+      const config = autoBuyByButton[upgrade.key]
+      if (config?.single) targets.push({ key: upgrade.key, type: 'single' })
+      if (config?.bulk) targets.push({ key: upgrade.key, type: 'bulk' })
+    }
+    return targets
+  }, [upgrades, autoBuyByButton])
+
+  const setAutoBuyEnabled = (key: UpgradeKey, type: 'single' | 'bulk', enabled: boolean) => {
+    setAutoBuyByButton((prev) => ({
+      ...prev,
+      [key]: {
+        ...prev[key],
+        [type]: enabled,
+      },
+    }))
+  }
   const [selectedAutoRisk, setSelectedAutoRisk] = useState<RiskKey | null>(null)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [leaderboardOpen, setLeaderboardOpen] = useState(false)
   const [animationsDisabled, setAnimationsDisabled] = useState(false)
   const [featureView, setFeatureView] = useState<'penguin' | 'chart'>('penguin')
-  const [penguinMapEnabled, setPenguinMapEnabled] = useState(false)
+  const [numberFormatStyle, setNumberFormatStyleState] = useState<NumberFormatStyle>(() => getNumberFormatStyle())
   const [collapsed, setCollapsed] = useState({
     resources: false,
     upgrades: false,
     risks: false,
   })
+
+  useEffect(() => {
+    setNumberFormatStyle(numberFormatStyle)
+  }, [numberFormatStyle])
 
   const totalLuck = Math.min(100, resources.luck + permLuck)
 
@@ -93,8 +125,7 @@ function GameApp({ profileId }: GameAppProps) {
   )
 
   useAutoBuy({
-    enabled: autoBuyEnabled,
-    hoveredButton,
+    targets: autoBuyTargets,
     upgrades,
     levels,
     cash: resources.cash,
@@ -133,7 +164,6 @@ function GameApp({ profileId }: GameAppProps) {
         insightBonus={incomeInsightBonus}
         luck={totalLuck}
         buffMultiplier={buffMultiplier}
-        permBoost={permBoost}
         elapsedSeconds={elapsedSeconds}
         prestige={resources.prestige}
         prestigeGain={prestigeGain}
@@ -163,7 +193,6 @@ function GameApp({ profileId }: GameAppProps) {
         cashHistory={cashHistory}
         totalLuck={totalLuck}
         permLuck={permLuck}
-        penguinMapEnabled={penguinMapEnabled}
       />
 
       <UpgradesSection
@@ -175,9 +204,8 @@ function GameApp({ profileId }: GameAppProps) {
         setOpenHelp={setOpenHelp}
         handlePurchase={handlePurchase}
         handlePurchaseBulk={handlePurchaseBulk}
-        autoBuyEnabled={autoBuyEnabled}
+        autoBuyByButton={autoBuyByButton}
         setAutoBuyEnabled={setAutoBuyEnabled}
-        setHoveredButton={setHoveredButton}
         performPrestige={performPrestige}
         prestigeGain={prestigeGain}
         permLuck={permLuck}
@@ -205,7 +233,7 @@ function GameApp({ profileId }: GameAppProps) {
         open={settingsOpen}
         animationsDisabled={animationsDisabled}
         featureView={featureView}
-        penguinMapEnabled={penguinMapEnabled}
+        numberFormatStyle={numberFormatStyle}
         onClose={() => setSettingsOpen(false)}
         onOpenRanking={() => {
           setSettingsOpen(false)
@@ -215,7 +243,8 @@ function GameApp({ profileId }: GameAppProps) {
         onResetProgress={resetProgress}
         onToggleAnimations={setAnimationsDisabled}
         onChangeFeatureView={setFeatureView}
-        onTogglePenguinMap={setPenguinMapEnabled}
+        onChangeNumberFormatStyle={setNumberFormatStyleState}
+        onSetCashAbsolute={setCashAbsolute}
       />
 
       <RankPromptModal

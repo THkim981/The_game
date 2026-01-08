@@ -1,6 +1,5 @@
 import type { Resources, Upgrade, UpgradeKey } from '../types'
 import { formatNumber as defaultFormatNumber } from '../utils/number'
-import type { HoveredButton } from '../hooks/useAutoBuy'
 import { CollapsiblePanel } from './CollapsiblePanel'
 
 interface UpgradesSectionProps {
@@ -12,9 +11,8 @@ interface UpgradesSectionProps {
   setOpenHelp: (key: UpgradeKey | null) => void
   handlePurchase: (key: UpgradeKey) => void
   handlePurchaseBulk: (key: UpgradeKey, quantity: number) => void
-  autoBuyEnabled: boolean
-  setAutoBuyEnabled: (value: boolean) => void
-  setHoveredButton: (hover: HoveredButton) => void
+  autoBuyByButton: Record<UpgradeKey, { single: boolean; bulk: boolean }>
+  setAutoBuyEnabled: (key: UpgradeKey, type: 'single' | 'bulk', enabled: boolean) => void
   performPrestige: () => void
   prestigeGain: number
   permLuck: number
@@ -36,9 +34,8 @@ export function UpgradesSection({
   setOpenHelp,
   handlePurchase,
   handlePurchaseBulk,
-  autoBuyEnabled,
+  autoBuyByButton,
   setAutoBuyEnabled,
-  setHoveredButton,
   performPrestige,
   prestigeGain,
   permLuck,
@@ -52,17 +49,6 @@ export function UpgradesSection({
 }: UpgradesSectionProps) {
   const actions = (
     <>
-      <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', userSelect: 'none' }}>
-        <input
-          type="checkbox"
-          checked={autoBuyEnabled}
-          onChange={(e) => setAutoBuyEnabled(e.target.checked)}
-          style={{ width: 16, height: 16, cursor: 'pointer' }}
-        />
-        <span style={{ fontSize: 13, color: autoBuyEnabled ? '#11a39c' : '#e8f7f9' }}>
-          자동 구매 {autoBuyEnabled ? '활성화' : '비활성화'}
-        </span>
-      </label>
       <button className="ghost pill" disabled={prestigeGain <= 0} onClick={performPrestige}>
         {prestigeGain <= 0 ? '프리스티지 불가' : `프리스티지 (+${formatNumber(prestigeGain)})`}
       </button>
@@ -126,24 +112,50 @@ export function UpgradesSection({
                   >
                     도움말
                   </button>
-                  <button
-                    className="ghost"
-                    disabled={resources.cash < cost || locked}
-                    onClick={() => handlePurchase(upgrade.key)}
-                    onMouseEnter={() => setHoveredButton({ key: upgrade.key, type: 'single' })}
-                    onMouseLeave={() => setHoveredButton(null)}
-                  >
-                    {locked ? 'MAX' : `구매 ${formatNumber(cost)} C`}
-                  </button>
-                  <button
-                    className="ghost"
-                    disabled={bulkCount === 0 || resources.cash < bulkCost}
-                    onClick={() => handlePurchaseBulk(upgrade.key, 10)}
-                    onMouseEnter={() => setHoveredButton({ key: upgrade.key, type: 'bulk' })}
-                    onMouseLeave={() => setHoveredButton(null)}
-                  >
-                    {bulkCount === 0 ? 'MAX' : `10개 구매 ${formatNumber(bulkCost)} C`}
-                  </button>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer', userSelect: 'none' }}>
+                      <input
+                        type="checkbox"
+                        checked={autoBuyByButton[upgrade.key]?.single ?? false}
+                        onChange={(e) => setAutoBuyEnabled(upgrade.key, 'single', e.target.checked)}
+                        disabled={locked}
+                        style={{ width: 14, height: 14, cursor: locked ? 'not-allowed' : 'pointer' }}
+                      />
+                      <span className="muted" style={{ fontSize: 12 }}>
+                        자동
+                      </span>
+                    </label>
+                    <button
+                      className="ghost"
+                      disabled={resources.cash < cost || locked}
+                      onClick={() => handlePurchase(upgrade.key)}
+                    >
+                      {locked ? 'MAX' : `구매 ${formatNumber(cost)} C`}
+                    </button>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer', userSelect: 'none' }}>
+                      <input
+                        type="checkbox"
+                        checked={autoBuyByButton[upgrade.key]?.bulk ?? false}
+                        onChange={(e) => setAutoBuyEnabled(upgrade.key, 'bulk', e.target.checked)}
+                        disabled={bulkCount === 0}
+                        style={{ width: 14, height: 14, cursor: bulkCount === 0 ? 'not-allowed' : 'pointer' }}
+                      />
+                      <span className="muted" style={{ fontSize: 12 }}>
+                        자동
+                      </span>
+                    </label>
+                    <button
+                      className="ghost"
+                      disabled={bulkCount === 0 || resources.cash < bulkCost}
+                      onClick={() => handlePurchaseBulk(upgrade.key, 10)}
+                    >
+                      {bulkCount === 0 ? 'MAX' : `10개 구매 ${formatNumber(bulkCost)} C`}
+                    </button>
+                  </div>
                 </div>
               </div>
               {openHelp === upgrade.key && (

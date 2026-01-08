@@ -3,24 +3,22 @@ import { clamp } from '../utils/number'
 
 export function getIncomeComponents(params: {
   levels: Record<UpgradeKey, number>
-  permBoost: number
   resources: Resources
   buffMultiplier: number
 }) {
-  const { levels, permBoost, resources, buffMultiplier } = params
+  const { levels, resources, buffMultiplier } = params
   const printer = 1 + 0.1 * levels.printer
   const vault = 1 + 0.05 * levels.vault
   const insightBonus = 1 + 0.12 * Math.log10(1 + resources.insight)
   const prestigeBonus = 1 + 0.05 * Math.log10(1 + resources.prestige)
   const total =
-    printer * vault * (1 + permBoost) * buffMultiplier * insightBonus * prestigeBonus
+    printer * vault * buffMultiplier * insightBonus * prestigeBonus
 
-  return { printer, vault, insightBonus, prestigeBonus, buffMultiplier, permBoost, total }
+  return { printer, vault, insightBonus, prestigeBonus, buffMultiplier, total }
 }
 
 export function computeIncomeMultiplier(params: {
   levels: Record<UpgradeKey, number>
-  permBoost: number
   resources: Resources
   buffMultiplier: number
 }) {

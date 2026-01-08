@@ -10,7 +10,6 @@ type Params = {
   setLevels: Dispatch<SetStateAction<Record<UpgradeKey, number>>>
   setBuffs: Dispatch<SetStateAction<Buff[]>>
   buffsRef: MutableRefObject<Buff[]>
-  setPermBoost: Dispatch<SetStateAction<number>>
   permLuck: number
   setPermLuck: Dispatch<SetStateAction<number>>
   setSnapKey: Dispatch<SetStateAction<number>>
@@ -33,7 +32,6 @@ export function useGameActions(params: Params) {
     setLevels,
     setBuffs,
     buffsRef,
-    setPermBoost,
     permLuck,
     setPermLuck,
     setSnapKey,
@@ -56,7 +54,6 @@ export function useGameActions(params: Params) {
       setLevels,
       setBuffs,
       buffsRef,
-      setPermBoost,
       permLuck,
       setPermLuck,
       setSnapKey,
@@ -77,7 +74,6 @@ export function useGameActions(params: Params) {
     setLevels,
     setBuffs,
     buffsRef,
-    setPermBoost,
     permLuck,
     setPermLuck,
     setSnapKey,

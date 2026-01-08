@@ -25,7 +25,6 @@ export function useGameLogic(profileId: string) {
   const [rankPromptSeconds, setRankPromptSeconds] = useState<number | null>(null)
   const [levels, setLevels] = useState<Record<UpgradeKey, number>>(initialLevels)
   const [buffs, setBuffs] = useState<Buff[]>(initialBuffs)
-  const [permBoost, setPermBoost] = useState(0)
   const [permLuck, setPermLuck] = useState(0)
   const [snapKey, setSnapKey] = useState(0)
   const buffsRef = useRef<Buff[]>([])
@@ -50,7 +49,6 @@ export function useGameLogic(profileId: string) {
     setLevels,
     setBuffs,
     buffsRef,
-    setPermBoost,
     setPermLuck,
     setMaxCash,
     setCashHistory,
@@ -63,11 +61,10 @@ export function useGameLogic(profileId: string) {
   })
 
   const { buffMultiplier, incomeMultiplier, incomeInsightBonus, conversionCosts, chipsRatePerSec, heatFullChargeSeconds, heatRatePerSec, effectiveUpgrades } =
-    useGameDerived({ resources, levels, permBoost, buffs })
+    useGameDerived({ resources, levels, buffs })
 
   useResourceTick({
     levels,
-    permBoost,
     chipsRatePerSec,
     heatRatePerSec,
     setResources,
@@ -99,7 +96,6 @@ export function useGameLogic(profileId: string) {
       resources: resourcesRef.current,
       levels,
       buffs: buffsRef.current,
-      permBoost,
       permLuck,
       maxCash,
       cashHistory,
@@ -108,18 +104,18 @@ export function useGameLogic(profileId: string) {
       rankPromptSeconds,
       sessionElapsedSeconds: elapsedSecondsRef.current,
     })
-  }, [cashHistory, levels, maxCash, permBoost, permLuck, rankPromptSeconds, runMaxCash, runStartMs])
+  }, [cashHistory, levels, maxCash, permLuck, rankPromptSeconds, runMaxCash, runStartMs])
 
   const getStatsPatch = useCallback((): Partial<ProfileStats> => {
     return buildStatsPatch({
-      activeGambleMultiplier: computeActiveGambleMultiplier(buffMultiplier, permBoost),
+      activeGambleMultiplier: computeActiveGambleMultiplier(buffMultiplier),
       prestige: resourcesRef.current.prestige,
       permLuck,
       cash: resourcesRef.current.cash,
     })
-  }, [buffMultiplier, permBoost, permLuck])
+  }, [buffMultiplier, permLuck])
 
-  useAutoSaveProfile({ profileId, getSaveState, getStatsPatch, intervalMs: 1500 })
+  useAutoSaveProfile({ profileId, getSaveState, getStatsPatch, intervalMs: 600_000 })
 
   const actions = useGameActions({
     getResources: () => resourcesRef.current,
@@ -128,7 +124,6 @@ export function useGameLogic(profileId: string) {
     setLevels,
     setBuffs,
     buffsRef,
-    setPermBoost,
     permLuck,
     setPermLuck,
     setSnapKey,
@@ -148,8 +143,21 @@ export function useGameLogic(profileId: string) {
     },
   })
 
-  const { pushToast, triggerFx, addBuff, handlePurchase, handlePurchaseBulk, convertCashToChips, convertCashToHeat, grantResources, performPrestige, buyPermanentLuck, permLuckCap, nextPermLuckCost } =
-    actions
+  const {
+    pushToast,
+    triggerFx,
+    addBuff,
+    handlePurchase,
+    handlePurchaseBulk,
+    convertCashToChips,
+    convertCashToHeat,
+    grantResources,
+    setCashAbsolute,
+    performPrestige,
+    buyPermanentLuck,
+    permLuckCap,
+    nextPermLuckCost,
+  } = actions
 
   const saveRankTime = useCallback(() => {
     if (rankPromptSeconds === null) {
@@ -158,7 +166,7 @@ export function useGameLogic(profileId: string) {
     }
 
     const safeUpgradeLevel = levels.printer + levels.vault + levels.battery + levels.refinery
-    const activeGambleMultiplier = computeActiveGambleMultiplier(buffMultiplier, permBoost)
+    const activeGambleMultiplier = computeActiveGambleMultiplier(buffMultiplier)
     const prestigeElapsedSeconds = Math.max(0, (Date.now() - runStartMs) / 1000)
 
     void postScore(profileId, rankPromptSeconds, {
@@ -177,7 +185,7 @@ export function useGameLogic(profileId: string) {
     })
 
     setRankPromptOpen(false)
-  }, [buffMultiplier, elapsedSeconds, levels, permBoost, permLuck, profileId, rankPromptSeconds, resources, runStartMs])
+  }, [buffMultiplier, elapsedSeconds, levels, permLuck, profileId, rankPromptSeconds, resources, runStartMs])
 
   const manualSave = useCallback(async () => {
     try {
@@ -198,7 +206,6 @@ export function useGameLogic(profileId: string) {
     setLevels,
     setBuffs,
     buffsRef,
-    setPermBoost,
     setPermLuck,
     setMaxCash,
     setCashHistory,
@@ -231,7 +238,6 @@ export function useGameLogic(profileId: string) {
     resourcesRef,
     setResources,
     addBuff,
-    setPermBoost,
     pushToast,
     triggerFx,
     adjustProbs,
@@ -242,7 +248,6 @@ export function useGameLogic(profileId: string) {
       resources,
       levels,
       buffs,
-      permBoost,
       permLuck,
       cashHistory,
       maxCash,
@@ -275,6 +280,7 @@ export function useGameLogic(profileId: string) {
       rollOutcome,
       convertCashToChips,
       convertCashToHeat,
+      setCashAbsolute,
       grantResources,
       performPrestige,
       buyPermanentLuck,

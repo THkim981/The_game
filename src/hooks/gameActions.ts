@@ -12,7 +12,6 @@ interface ActionDeps {
   setLevels: React.Dispatch<React.SetStateAction<Record<UpgradeKey, number>>>
   setBuffs: React.Dispatch<React.SetStateAction<Buff[]>>
   buffsRef: React.MutableRefObject<Buff[]>
-  setPermBoost: React.Dispatch<React.SetStateAction<number>>
   permLuck: number
   setPermLuck: React.Dispatch<React.SetStateAction<number>>
   setSnapKey: React.Dispatch<React.SetStateAction<number>>
@@ -34,7 +33,6 @@ export function buildGameActions({
   setLevels,
   setBuffs,
   buffsRef,
-  setPermBoost,
   permLuck,
   setPermLuck,
   setSnapKey,
@@ -141,6 +139,17 @@ export function buildGameActions({
     }))
   }
 
+  const setCashAbsolute = (cashValue: number) => {
+    if (typeof cashValue !== 'number' || !Number.isFinite(cashValue)) {
+      pushToast('bad', 'Cash 설정', '유효한 숫자를 입력하세요')
+      return
+    }
+
+    const clamped = Math.min(CASH_MAX, Math.max(0, cashValue))
+    setResources((prev) => ({ ...prev, cash: clamped }))
+    pushToast('good', 'Cash 설정', `Cash = ${formatNumber(clamped)} C`)
+  }
+
   const performPrestige = () => {
     const snapshot = getResources()
     const gain = computePrestigeGain(snapshot)
@@ -149,7 +158,6 @@ export function buildGameActions({
     setResources({ ...initialResources, prestige: snapshot.prestige + gain })
     setLevels(initialLevels)
     setBuffs(initialBuffs)
-    setPermBoost(0)
     setSnapKey((k) => k + 1)
     setOpenHelp(null)
     setFx(null)
@@ -180,6 +188,7 @@ export function buildGameActions({
     convertCashToChips,
     convertCashToHeat,
     grantResources,
+    setCashAbsolute,
     performPrestige,
     buyPermanentLuck,
     permLuckCap,

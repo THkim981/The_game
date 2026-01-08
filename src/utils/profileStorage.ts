@@ -34,7 +34,6 @@ export type SavedGameState = {
   }
   levels: Record<string, number>
   buffs: Array<{ id: string; multiplier: number; expiresAt: number }>
-  permBoost: number
   permLuck: number
   maxCash: number
   cashHistory: number[]

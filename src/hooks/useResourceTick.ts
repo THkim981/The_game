@@ -6,7 +6,6 @@ import { computeIncomeMultiplier } from './gameCalculations'
 
 interface ResourceTickParams {
   levels: Record<UpgradeKey, number>
-  permBoost: number
   chipsRatePerSec: number
   heatRatePerSec: number
   setResources: React.Dispatch<React.SetStateAction<Resources>>
@@ -19,7 +18,6 @@ interface ResourceTickParams {
 
 export function useResourceTick({
   levels,
-  permBoost,
   chipsRatePerSec,
   heatRatePerSec,
   setResources,
@@ -52,7 +50,6 @@ export function useResourceTick({
         const activeBuffMultiplier = buffsRef.current.reduce((acc, buff) => acc * buff.multiplier, 1)
         const baseMultiplier = computeIncomeMultiplier({
           levels,
-          permBoost,
           resources: prev,
           buffMultiplier: activeBuffMultiplier,
         })
@@ -84,5 +81,5 @@ export function useResourceTick({
 
     const id = setInterval(tick, TICK_MS)
     return () => clearInterval(id)
-  }, [chipsRatePerSec, heatRatePerSec, levels, permBoost, setBuffs, setCashHistory, setResources, sampleAccumulator, buffsRef])
+  }, [chipsRatePerSec, heatRatePerSec, levels, setBuffs, setCashHistory, setResources, sampleAccumulator, buffsRef])
 }

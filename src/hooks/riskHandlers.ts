@@ -7,7 +7,6 @@ interface RiskDeps {
   gainInsight: (amount: number) => void
   shiftLuck: (delta: number) => void
   addBuff: (multiplier: number, minutes: number) => void
-  addPermBoost: (delta: number) => void
   pushToast: (tone: Tone, title: string, detail: string) => void
   triggerFx: (tone: Tone) => void
   adjustProbs: (tier: RiskTier) => RiskTier['baseProbs']
@@ -19,7 +18,6 @@ export function createRollOutcome({
   gainInsight,
   shiftLuck,
   addBuff,
-  addPermBoost,
   pushToast,
   triggerFx,
   adjustProbs,
@@ -42,7 +40,7 @@ export function createRollOutcome({
     }
 
     spendResources(tier)
-    applyOutcome({ tier, outcome, gainInsight, shiftLuck, addBuff, addPermBoost, pushToast, triggerFx })
+    applyOutcome({ tier, outcome, gainInsight, shiftLuck, addBuff, pushToast, triggerFx })
   }
 }
 
@@ -52,17 +50,15 @@ function applyOutcome(params: {
   gainInsight: (amount: number) => void
   shiftLuck: (delta: number) => void
   addBuff: (multiplier: number, minutes: number) => void
-  addPermBoost: (delta: number) => void
   pushToast: (tone: Tone, title: string, detail: string) => void
   triggerFx: (tone: Tone) => void
 }) {
-  const { tier, outcome, gainInsight, shiftLuck, addBuff, addPermBoost, pushToast, triggerFx } = params
+  const { tier, outcome, gainInsight, shiftLuck, addBuff, pushToast, triggerFx } = params
   const { reward } = tier
   const insightGain = tier.cost * reward.insightFactor[outcome]
 
   if (outcome === 'jackpot') {
     addBuff(reward.jackpotBuff, reward.buffMinutes)
-    if (reward.permBoost) addPermBoost(reward.permBoost)
     gainInsight(insightGain)
     shiftLuck(-35)
     pushToast('good', '대성공!', `부스트 x${reward.jackpotBuff.toFixed(1)} / Insight +${insightGain.toFixed(1)}`)
