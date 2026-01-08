@@ -37,22 +37,18 @@ export type RiskTier = {
   baseProbs: {
     jackpot: number
     success: number
-    neutral: number
     fail: number
     crash: number
   }
   reward: {
     jackpotBuff: number
     successBuff: number
-    buffMinutes: number
     insightFactor: {
       jackpot: number
       success: number
-      neutral: number
       fail: number
       crash: number
     }
-    chipRefund: { neutral: number }
   }
 }
 

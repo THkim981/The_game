@@ -54,40 +54,42 @@ export function RankPromptModal({
         ) : undefined
       }
     >
-      {mode === 'prompt' ? (
-        <>
-          <p>1e100를 달성했습니다. 시간을 랭킹에 기록하시겠습니까?</p>
-          <p className="muted" style={{ marginTop: 8 }}>
-            기록 시간: {rankPromptSeconds === null ? '계산 중...' : formatScore(rankPromptSeconds)}
-          </p>
-        </>
-      ) : (
-        <p className="muted">TOP 랭킹 (시간이 낮을수록 상위)</p>
-      )}
-
-      <div style={{ marginTop: 12 }}>
-        <p style={{ margin: 0, fontWeight: 700 }}>TOP 10</p>
-        {rankingLoading ? (
-          <p className="muted" style={{ marginTop: 8 }}>
-            불러오는 중...
-          </p>
-        ) : rankingError ? (
-          <p className="muted" style={{ marginTop: 8 }}>
-            {rankingError}
-          </p>
-        ) : ranking.length === 0 ? (
-          <p className="muted" style={{ marginTop: 8 }}>
-            랭킹 없음
-          </p>
+      <div style={{ maxHeight: '70vh', overflowY: 'auto', paddingRight: 4 }}>
+        {mode === 'prompt' ? (
+          <>
+            <p>1e100를 달성했습니다. 시간을 랭킹에 기록하시겠습니까?</p>
+            <p className="muted" style={{ marginTop: 8 }}>
+              기록 시간: {rankPromptSeconds === null ? '계산 중...' : formatScore(rankPromptSeconds)}
+            </p>
+          </>
         ) : (
-          <ol style={{ margin: '8px 0 0', paddingLeft: 18, display: 'grid', gap: 6 }}>
-            {ranking.map((row, i) => (
-              <li key={row.userId} className="muted" style={{ fontSize: 13 }}>
-                #{i + 1} · {formatScore(row.bestScoreSeconds)} · {shortId(row.userId)}
-              </li>
-            ))}
-          </ol>
+          <p className="muted">TOP 랭킹 (프리스티지 이후 1e100까지 기록 · 시간이 낮을수록 상위)</p>
         )}
+
+        <div style={{ marginTop: 12 }}>
+          <p style={{ margin: 0, fontWeight: 700 }}>TOP 10</p>
+          {rankingLoading ? (
+            <p className="muted" style={{ marginTop: 8 }}>
+              불러오는 중...
+            </p>
+          ) : rankingError ? (
+            <p className="muted" style={{ marginTop: 8 }}>
+              {rankingError}
+            </p>
+          ) : ranking.length === 0 ? (
+            <p className="muted" style={{ marginTop: 8 }}>
+              랭킹 없음
+            </p>
+          ) : (
+            <ol style={{ margin: '8px 0 0', paddingLeft: 18, display: 'grid', gap: 6 }}>
+              {ranking.map((row, i) => (
+                <li key={row.userId} className="muted" style={{ fontSize: 13 }}>
+                  #{i + 1} · {formatScore(row.bestScoreSeconds)} · {shortId(row.userId)}
+                </li>
+              ))}
+            </ol>
+          )}
+        </div>
       </div>
     </Modal>
   )

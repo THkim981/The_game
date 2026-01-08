@@ -6,7 +6,7 @@ interface RiskDeps {
   spendResources: (tier: RiskTier) => void
   gainInsight: (amount: number) => void
   shiftLuck: (delta: number) => void
-  addBuff: (multiplier: number, minutes: number) => void
+  addBuff: (multiplier: number) => void
   pushToast: (tone: Tone, title: string, detail: string) => void
   triggerFx: (tone: Tone) => void
   adjustProbs: (tier: RiskTier) => RiskTier['baseProbs']
@@ -49,7 +49,7 @@ function applyOutcome(params: {
   outcome: keyof RiskTier['baseProbs']
   gainInsight: (amount: number) => void
   shiftLuck: (delta: number) => void
-  addBuff: (multiplier: number, minutes: number) => void
+  addBuff: (multiplier: number) => void
   pushToast: (tone: Tone, title: string, detail: string) => void
   triggerFx: (tone: Tone) => void
 }) {
@@ -58,7 +58,7 @@ function applyOutcome(params: {
   const insightGain = tier.cost * reward.insightFactor[outcome]
 
   if (outcome === 'jackpot') {
-    addBuff(reward.jackpotBuff, reward.buffMinutes)
+    addBuff(reward.jackpotBuff)
     gainInsight(insightGain)
     shiftLuck(-35)
     pushToast('good', '대성공!', `부스트 x${reward.jackpotBuff.toFixed(1)} / Insight +${insightGain.toFixed(1)}`)
@@ -67,7 +67,7 @@ function applyOutcome(params: {
   }
 
   if (outcome === 'success') {
-    addBuff(reward.successBuff, reward.buffMinutes)
+    addBuff(reward.successBuff)
     gainInsight(insightGain)
     shiftLuck(-35)
     pushToast('good', '성공', `부스트 x${reward.successBuff.toFixed(2)} / Insight +${insightGain.toFixed(1)}`)

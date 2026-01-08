@@ -59,7 +59,7 @@ export function buildGameActions({
     window.setTimeout(() => setFx(null), 900)
   }
 
-  const addBuff = (multiplier: number, _minutes: number) => {
+  const addBuff = (multiplier: number) => {
     // 지속 버프: 만료 없음(사실상 영구). 도박 성공/대성공 시 부스트는 '중첩(곱)'됩니다.
     // NOTE: Infinity는 JSON.stringify 시 null이 되어 저장/복원이 깨지므로 far-future timestamp를 사용.
     setBuffs((prev) => {

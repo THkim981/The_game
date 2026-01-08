@@ -5,10 +5,10 @@ import { createRollOutcome } from './riskHandlers'
 type RollOutcomeParams = {
   resourcesRef: React.MutableRefObject<Resources>
   setResources: React.Dispatch<React.SetStateAction<Resources>>
-  addBuff: (multiplier: number, expiresAtMs: number) => void
+  addBuff: (multiplier: number) => void
   pushToast: (tone: Tone, title: string, detail: string) => void
   triggerFx: (tone: Tone) => void
-  adjustProbs: (tier: RiskTier) => { jackpot: number; success: number; neutral: number; fail: number; crash: number }
+  adjustProbs: (tier: RiskTier) => { jackpot: number; success: number; fail: number; crash: number }
 }
 
 export function useRollOutcome(params: RollOutcomeParams) {
