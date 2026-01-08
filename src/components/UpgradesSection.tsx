@@ -102,17 +102,22 @@ export function UpgradesSection({
               <div className="row space">
                 <div>
                   <p className="eyebrow">Lv.{level}</p>
-                  <h4>{upgrade.name}</h4>
+                  <h4 style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span>{upgrade.name}</span>
+                    <button
+                      type="button"
+                      className="term-help"
+                      onClick={() => setOpenHelp(openHelp === upgrade.key ? null : upgrade.key)}
+                      aria-label={`${upgrade.name} 도움말`}
+                      aria-expanded={openHelp === upgrade.key}
+                      aria-controls={`upgrade-help-${upgrade.key}`}
+                    >
+                      !
+                    </button>
+                  </h4>
                   <p className="muted">{upgrade.description}</p>
                 </div>
                 <div className="upgrade-actions">
-                  <button
-                    className="ghost pill"
-                    onClick={() => setOpenHelp(openHelp === upgrade.key ? null : upgrade.key)}
-                  >
-                    도움말
-                  </button>
-
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <label style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer', userSelect: 'none' }}>
                       <input
@@ -159,7 +164,7 @@ export function UpgradesSection({
                 </div>
               </div>
               {openHelp === upgrade.key && (
-                <div className="help">
+                <div className="help" id={`upgrade-help-${upgrade.key}`}>
                   <p>{upgradeHelp[upgrade.key]}</p>
                 </div>
               )}

@@ -63,6 +63,10 @@
 }
 
 .term-help {
+  appearance: none;
+  background: transparent;
+  padding: 0;
+  color: #e8f7f9;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -73,11 +77,12 @@
   font-size: 11px;
   line-height: 1;
   text-decoration: none;
-  cursor: help;
+  cursor: pointer;
   opacity: 0.9;
   margin-left: 6px;
   vertical-align: middle;
 }
+
 
 .summary strong {
   display: block;
