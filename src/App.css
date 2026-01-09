@@ -329,25 +329,50 @@
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 16px;
   z-index: 30;
+  animation: backdrop-in 0.2s ease;
+}
+
+@keyframes backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .modal {
-  background: #0b1220;
+  background: linear-gradient(135deg, #0d1425 0%, #0a0f1a 100%);
   color: #e8f7f9;
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  width: min(520px, 100%);
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.4);
+  border-radius: 20px;
+  border: 1px solid rgba(17, 163, 156, 0.2);
+  width: min(580px, 100%);
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 16px 18px 18px;
+  gap: 0;
+  padding: 0;
+  animation: modal-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes modal-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 .modal-header {
@@ -355,10 +380,324 @@
   justify-content: space-between;
   align-items: center;
   gap: 12px;
+  padding: 20px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(17, 163, 156, 0.05);
+}
+
+.modal-header h3 {
+  font-size: 20px;
+  font-weight: 700;
 }
 
 .modal-body {
-  padding: 4px 0;
+  padding: 20px 24px;
+  overflow-y: auto;
+}
+
+/* Settings Modal Styles */
+.settings-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.settings-section {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 18px;
+  transition: all 0.2s ease;
+}
+
+.settings-section:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(17, 163, 156, 0.3);
+}
+
+.settings-section.settings-dev {
+  background: rgba(245, 158, 11, 0.08);
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.settings-section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.settings-icon {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.settings-section-header h4 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #e8f7f9;
+}
+
+/* Toggle Item */
+.settings-toggle-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  cursor: pointer;
+  padding: 12px;
+  border-radius: 10px;
+  transition: background 0.2s ease;
+}
+
+.settings-toggle-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.settings-item-content {
+  flex: 1;
+}
+
+.settings-item-title {
+  font-weight: 600;
+  font-size: 15px;
+  color: #e8f7f9;
+  margin-bottom: 4px;
+}
+
+.settings-item-desc {
+  font-size: 13px;
+  color: rgba(232, 247, 249, 0.65);
+  line-height: 1.4;
+}
+
+/* Custom Checkbox */
+.settings-checkbox {
+  appearance: none;
+  width: 48px;
+  height: 28px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.settings-checkbox::before {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  background: #fff;
+  border-radius: 50%;
+  top: 2px;
+  left: 2px;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.settings-checkbox:checked {
+  background: #11a39c;
+  border-color: #11a39c;
+}
+
+.settings-checkbox:checked::before {
+  transform: translateX(20px);
+}
+
+/* Radio Group */
+.settings-radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.settings-radio-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.settings-radio-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(17, 163, 156, 0.4);
+}
+
+.settings-radio-item:has(.settings-radio:checked) {
+  background: rgba(17, 163, 156, 0.15);
+  border-color: rgba(17, 163, 156, 0.6);
+  box-shadow: 0 0 0 3px rgba(17, 163, 156, 0.1);
+}
+
+/* Custom Radio */
+.settings-radio {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.settings-radio:checked {
+  border-color: #11a39c;
+  background: #11a39c;
+}
+
+.settings-radio:checked::before {
+  content: '';
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: #fff;
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.settings-radio-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #e8f7f9;
+  flex: 1;
+}
+
+.radio-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+/* Input Fields */
+.settings-input {
+  width: 100%;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  color: #e8f7f9;
+  font-size: 14px;
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+
+.settings-input:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: #11a39c;
+  box-shadow: 0 0 0 3px rgba(17, 163, 156, 0.2);
+}
+
+.settings-input::placeholder {
+  color: rgba(232, 247, 249, 0.4);
+}
+
+/* Button Group */
+.settings-button-group {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.settings-button {
+  flex: 1;
+  min-width: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: rgba(17, 163, 156, 0.15);
+  border: 1px solid rgba(17, 163, 156, 0.4);
+  border-radius: 10px;
+  color: #11a39c;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.settings-button:hover:not(:disabled) {
+  background: rgba(17, 163, 156, 0.25);
+  border-color: rgba(17, 163, 156, 0.6);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(17, 163, 156, 0.3);
+}
+
+.settings-button.dev {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: rgba(245, 158, 11, 0.4);
+  color: #f59e0b;
+}
+
+.settings-button.dev:hover:not(:disabled) {
+  background: rgba(245, 158, 11, 0.25);
+  border-color: rgba(245, 158, 11, 0.6);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+
+.button-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+/* Dev Group */
+.settings-dev-group {
+  display: flex;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.settings-dev-group .settings-input {
+  flex: 1;
+}
+
+.settings-dev-group .settings-button {
+  flex: 0 0 auto;
+  min-width: auto;
+}
+
+/* Hint Text */
+.settings-hint {
+  margin: 8px 0 0;
+  padding: 0;
+  font-size: 13px;
+  color: rgba(232, 247, 249, 0.55);
+  line-height: 1.4;
+}
+
+/* Scrollbar Styling */
+.modal::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modal::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 10px;
+}
+
+.modal::-webkit-scrollbar-thumb {
+  background: rgba(17, 163, 156, 0.3);
+  border-radius: 10px;
+}
+
+.modal::-webkit-scrollbar-thumb:hover {
+  background: rgba(17, 163, 156, 0.5);
 }
 
 .modal-footer {
@@ -639,6 +978,36 @@ h4 {
     min-width: calc(100vw - 24px);
     max-width: calc(100vw - 24px);
   }
+
+  .modal {
+    width: min(580px, calc(100% - 16px));
+    border-radius: 18px;
+  }
+
+  .modal-header {
+    padding: 18px 20px;
+  }
+
+  .modal-body {
+    padding: 18px 20px;
+  }
+
+  .settings-section {
+    padding: 16px;
+  }
+
+  .settings-button-group {
+    flex-direction: column;
+  }
+
+  .settings-button {
+    min-width: auto;
+    width: 100%;
+  }
+
+  .settings-dev-group {
+    flex-direction: column;
+  }
 }
 
 @media (max-width: 480px) {
@@ -711,5 +1080,63 @@ h4 {
   .help {
     font-size: 13px;
     padding: 8px 10px;
+  }
+
+  .modal {
+    width: min(580px, calc(100% - 8px));
+    border-radius: 16px;
+  }
+
+  .modal-header {
+    padding: 16px 18px;
+  }
+
+  .modal-header h3 {
+    font-size: 18px;
+  }
+
+  .modal-body {
+    padding: 16px 18px;
+  }
+
+  .settings-section {
+    padding: 14px;
+    border-radius: 12px;
+  }
+
+  .settings-section-header {
+    margin-bottom: 12px;
+  }
+
+  .settings-icon {
+    font-size: 18px;
+  }
+
+  .settings-section-header h4 {
+    font-size: 15px;
+  }
+
+  .settings-toggle-item,
+  .settings-radio-item {
+    padding: 10px;
+  }
+
+  .settings-item-title {
+    font-size: 14px;
+  }
+
+  .settings-item-desc,
+  .settings-hint {
+    font-size: 12px;
+  }
+
+  .settings-input {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+
+  .settings-button {
+    padding: 10px 14px;
+    font-size: 13px;
   }
 }

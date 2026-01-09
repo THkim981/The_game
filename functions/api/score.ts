@@ -17,7 +17,7 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
 
   // meta fields are accepted for forward-compatibility but not persisted (matches previous server behavior).
   try {
-    const result = await upsertAnonBestScore(env, userId, score)
+    const result = await upsertAnonBestScore(env, userId, score, body?.nickname)
     return json({ ok: true, bestScoreSeconds: result.bestScoreSeconds })
   } catch (err: any) {
     return json({ error: err?.message || 'Invalid score' }, { status: 400 })

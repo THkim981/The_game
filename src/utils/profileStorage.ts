@@ -156,6 +156,7 @@ export async function resetProfile(profileId: ProfileId): Promise<void> {
 
 export type RankingEntry = {
   userId: string
+  nickname?: string | null
   bestScoreSeconds: number
   updatedAt: number
 
@@ -188,14 +189,28 @@ export async function postScore(
   userId: string,
   scoreSeconds: number,
   meta: ScoreMeta,
+  nickname?: string,
 ): Promise<{ ok: true; bestScoreSeconds: number }> {
   return apiFetch('/api/score', {
     method: 'POST',
-    body: JSON.stringify({ userId, score: scoreSeconds, ...meta }),
+    body: JSON.stringify({ userId, score: scoreSeconds, nickname, ...meta }),
   })
 }
 
-export async function getRanking(limit = 10): Promise<RankingEntry[]> {
-  const res = await apiFetch<{ ranking: RankingEntry[] }>(`/api/ranking?limit=${limit}`)
+export async function getRanking(params?: { limit?: number; offset?: number }): Promise<RankingEntry[]> {
+  const limit = params?.limit
+  const offset = params?.offset
+  const search = new URLSearchParams()
+  if (typeof limit === 'number') search.set('limit', String(limit))
+  if (typeof offset === 'number') search.set('offset', String(offset))
+  const url = search.size > 0 ? `/api/ranking?${search.toString()}` : '/api/ranking'
+  const res = await apiFetch<{ ranking: RankingEntry[] }>(url)
   return res.ranking
+}
+
+export async function setNickname(userId: string, nickname: string): Promise<{ ok: true; nickname: string | null }> {
+  return apiFetch('/api/nickname', {
+    method: 'POST',
+    body: JSON.stringify({ userId, nickname }),
+  })
 }

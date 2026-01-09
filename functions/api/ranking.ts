@@ -8,6 +8,7 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
 
   const url = new URL(request.url)
   const limit = Math.max(1, Math.min(50, Number(url.searchParams.get('limit') ?? 10)))
-  const ranking = await getAnonRanking(env, limit)
+  const offset = Math.max(0, Math.min(100_000, Number(url.searchParams.get('offset') ?? 0)))
+  const ranking = await getAnonRanking(env, limit, offset)
   return json({ ranking })
 }

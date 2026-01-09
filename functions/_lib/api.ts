@@ -185,43 +185,90 @@ export async function resetProfile(env: Env, profileId: string) {
   await d1Run(env.DB, 'DELETE FROM anon_users WHERE user_id = ?', [String(profileId ?? '').trim().toLowerCase()])
   return { ok: true }
 }
-export async function upsertAnonBestScore(env: Env, userId: string, seconds: number) {
+
+function sanitizeNickname(input: unknown): string | null {
+  const raw = String(input ?? '').trim()
+  if (!raw) return null
+  const compact = raw.replace(/[\r\n\t]/g, ' ').replace(/\s+/g, ' ').trim()
+  const limited = compact.slice(0, 12)
+  return limited.length > 0 ? limited : null
+}
+
+export async function upsertAnonBestScore(env: Env, userId: string, seconds: number, nickname?: unknown) {
   const cleaned = String(userId ?? '').trim().toLowerCase()
   if (!/^[a-f0-9]{32}$/.test(cleaned)) throw new Error('Invalid userId')
   if (typeof seconds !== 'number' || !Number.isFinite(seconds) || seconds < 0) throw new Error('Invalid score')
 
+  const safeNickname = sanitizeNickname(nickname)
+
   const now = Date.now()
-  const prev = await d1First<{ best_score: number | null }>(env.DB, 'SELECT best_score FROM anon_users WHERE user_id = ?', [cleaned])
+  const prev = await d1First<{ best_score: number | null; nickname: string | null }>(
+    env.DB,
+    'SELECT best_score, nickname FROM anon_users WHERE user_id = ?',
+    [cleaned],
+  )
   const prevBest = prev?.best_score
 
   if (prevBest != null && typeof prevBest === 'number' && seconds >= prevBest) {
+    const prevNick = typeof prev?.nickname === 'string' ? prev.nickname.trim() : ''
+    const nextNick = typeof safeNickname === 'string' ? safeNickname.trim() : ''
+    if (nextNick && nextNick !== prevNick) {
+      await d1Run(env.DB, 'UPDATE anon_users SET nickname = ?, updated_at = ? WHERE user_id = ?', [nextNick, now, cleaned])
+    }
     return { ok: true, updated: false, bestScoreSeconds: prevBest, updatedAt: now }
   }
 
   await d1Run(
     env.DB,
-    `INSERT INTO anon_users (user_id, best_score, updated_at)
-     VALUES (?, ?, ?)
+    `INSERT INTO anon_users (user_id, best_score, updated_at, nickname)
+     VALUES (?, ?, ?, ?)
      ON CONFLICT(user_id) DO UPDATE SET
        best_score = excluded.best_score,
-       updated_at = excluded.updated_at`,
-    [cleaned, seconds, now],
+       updated_at = excluded.updated_at,
+       nickname = COALESCE(excluded.nickname, anon_users.nickname)`,
+    [cleaned, seconds, now, safeNickname],
   )
 
   return { ok: true, updated: true, bestScoreSeconds: seconds, updatedAt: now }
 }
 
-export async function getAnonRanking(env: Env, limit = 10) {
+export async function getAnonRanking(env: Env, limit = 10, offset = 0) {
   const safeLimit = Math.max(1, Math.min(50, Number(limit) || 10))
-  const rows = await d1All<{ user_id: string; best_score: number; updated_at: number }>(
+  const safeOffset = Math.max(0, Math.min(100_000, Number(offset) || 0))
+  const rows = await d1All<{ user_id: string; nickname: string | null; best_score: number; updated_at: number }>(
     env.DB,
-    `SELECT user_id, best_score, updated_at
+    `SELECT user_id, nickname, best_score, updated_at
      FROM anon_users
      WHERE best_score IS NOT NULL
      ORDER BY best_score ASC, updated_at ASC
-     LIMIT ?`,
-    [safeLimit],
+     LIMIT ? OFFSET ?`,
+    [safeLimit, safeOffset],
   )
 
-  return rows.map((r) => ({ userId: r.user_id, bestScoreSeconds: r.best_score, updatedAt: r.updated_at }))
+  return rows.map((r) => ({
+    userId: r.user_id,
+    nickname: r.nickname ?? null,
+    bestScoreSeconds: r.best_score,
+    updatedAt: r.updated_at,
+  }))
+}
+
+export async function upsertAnonNickname(env: Env, userId: string, nickname?: unknown) {
+  const cleaned = String(userId ?? '').trim().toLowerCase()
+  if (!/^[a-f0-9]{32}$/.test(cleaned)) throw new Error('Invalid userId')
+
+  const safeNickname = sanitizeNickname(nickname)
+  const now = Date.now()
+
+  await d1Run(
+    env.DB,
+    `INSERT INTO anon_users (user_id, best_score, updated_at, nickname)
+     VALUES (?, NULL, ?, ?)
+     ON CONFLICT(user_id) DO UPDATE SET
+       updated_at = excluded.updated_at,
+       nickname = excluded.nickname`,
+    [cleaned, now, safeNickname],
+  )
+
+  return { ok: true, nickname: safeNickname }
 }

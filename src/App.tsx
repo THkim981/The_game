@@ -1,6 +1,6 @@
 import './App.css'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { HeroHeader } from './components/HeroHeader'
 import { RankPromptModal } from './components/RankPromptModal'
@@ -20,6 +20,11 @@ import { formatNumber, getNumberFormatStyle, setNumberFormatStyle } from './util
 
 type GameAppProps = {
   profileId: string
+}
+
+// 쿠폰 설정 - 대소문자 포함 무작위 문자 (10자)
+const VALID_COUPONS: Record<string, { prestige: number; description: string }> = {
+  GmK7pQxR2z: { prestige: 2e4, description: 'Prestige 20000 지급' },
 }
 
 function GameApp({ profileId }: GameAppProps) {
@@ -55,10 +60,63 @@ function GameApp({ profileId }: GameAppProps) {
       saveRankTime,
       dismissRankTime,
       manualSave,
-      resetProgress,
+      grantResources,
     },
     data: { upgrades, upgradeHelp, riskTiers },
   } = useGameLogic(profileId)
+
+  // 쿠폰 사용 기록 (localStorage 저장)
+  const [usedCoupons, setUsedCoupons] = useState<Set<string>>(() => {
+    try {
+      const stored = localStorage.getItem(`used_coupons_${profileId}`)
+      return stored ? new Set(JSON.parse(stored)) : new Set()
+    } catch {
+      return new Set()
+    }
+  })
+
+  // 쿠폰 사용 기록 저장
+  useEffect(() => {
+    try {
+      localStorage.setItem(`used_coupons_${profileId}`, JSON.stringify([...usedCoupons]))
+    } catch {
+      // ignore
+    }
+  }, [usedCoupons, profileId])
+
+  // 쿠폰 적용 함수
+  const applyCoupon = useCallback(
+    (code: string): { success: boolean; message: string } => {
+      const trimmedCode = code.trim()
+
+      if (!trimmedCode) {
+        return { success: false, message: '쿠폰 코드를 입력하세요' }
+      }
+
+      // 이미 사용한 쿠폰인지 확인
+      if (usedCoupons.has(trimmedCode)) {
+        return { success: false, message: '이미 사용한 쿠폰입니다' }
+      }
+
+      // 유효한 쿠폰인지 확인
+      const couponData = VALID_COUPONS[trimmedCode]
+      if (!couponData) {
+        return { success: false, message: '유효하지 않은 쿠폰 코드입니다' }
+      }
+
+      // 쿠폰 혜택 지급
+      grantResources({ prestige: couponData.prestige })
+
+      // 사용 기록 저장
+      setUsedCoupons((prev) => new Set([...prev, trimmedCode]))
+
+      return {
+        success: true,
+        message: `🎉 ${couponData.description}\nPrestige +${formatNumber(couponData.prestige)}`,
+      }
+    },
+    [usedCoupons, grantResources],
+  )
 
   const penguinCashThresholds = useMemo(() => [1e10, 1e16, 1e28, 1e40, 1e51], [])
   const penguinLevel = useMemo(() => {
@@ -240,17 +298,18 @@ function GameApp({ profileId }: GameAppProps) {
           setLeaderboardOpen(true)
         }}
         onManualSave={manualSave}
-        onResetProgress={resetProgress}
         onToggleAnimations={setAnimationsDisabled}
         onChangeFeatureView={setFeatureView}
         onChangeNumberFormatStyle={setNumberFormatStyleState}
         onSetCashAbsolute={setCashAbsolute}
+        onApplyCoupon={applyCoupon}
       />
 
       <RankPromptModal
         open={rankPromptOpen || leaderboardOpen}
         mode={rankPromptOpen ? 'prompt' : 'leaderboard'}
         rankPromptSeconds={rankPromptSeconds}
+        userId={profileId}
         onClose={() => {
           if (rankPromptOpen) dismissRankTime()
           else setLeaderboardOpen(false)

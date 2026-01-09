@@ -79,12 +79,18 @@ db.exec(`
 
   CREATE TABLE IF NOT EXISTS anon_users (
     user_id TEXT PRIMARY KEY,
+    nickname TEXT,
     best_score REAL,
     updated_at INTEGER NOT NULL
   );
 `)
 
 // Lightweight migrations for existing local DB files
+const anonCols = db.prepare('PRAGMA table_info(anon_users)').all().map((c) => c.name)
+if (!anonCols.includes('nickname')) {
+  db.exec('ALTER TABLE anon_users ADD COLUMN nickname TEXT')
+}
+
 const profileStatsCols = db.prepare('PRAGMA table_info(profile_stats)').all().map((c) => c.name)
 if (!profileStatsCols.includes('lastCash')) {
   db.exec('ALTER TABLE profile_stats ADD COLUMN lastCash REAL NOT NULL DEFAULT 0')
@@ -322,43 +328,79 @@ function logoutSession(token) {
   db.prepare('DELETE FROM sessions WHERE token = ?').run(token)
 }
 
-function upsertAnonBestScore(userId, seconds) {
+function sanitizeNickname(input) {
+  const raw = String(input ?? '').trim()
+  if (!raw) return null
+  const compact = raw.replace(/[\r\n\t]/g, ' ').replace(/\s+/g, ' ').trim()
+  const limited = compact.slice(0, 12)
+  return limited.length > 0 ? limited : null
+}
+
+function upsertAnonBestScore(userId, seconds, nickname) {
   const cleaned = String(userId ?? '').trim().toLowerCase()
   if (!/^[a-f0-9]{32}$/.test(cleaned)) throw new Error('Invalid userId')
   if (typeof seconds !== 'number' || !Number.isFinite(seconds) || seconds < 0) throw new Error('Invalid score')
 
+  const safeNickname = sanitizeNickname(nickname)
+
   const now = Date.now()
-  const prev = db.prepare('SELECT best_score FROM anon_users WHERE user_id = ?').get(cleaned)
+  const prev = db.prepare('SELECT best_score, nickname FROM anon_users WHERE user_id = ?').get(cleaned)
   const prevBest = prev?.best_score
 
   // Lower time is better.
   if (prevBest != null && typeof prevBest === 'number' && seconds >= prevBest) {
+    const prevNick = typeof prev?.nickname === 'string' ? prev.nickname.trim() : ''
+    const nextNick = typeof safeNickname === 'string' ? safeNickname.trim() : ''
+    if (nextNick && nextNick !== prevNick) {
+      db.prepare('UPDATE anon_users SET nickname = ?, updated_at = ? WHERE user_id = ?').run(nextNick, now, cleaned)
+    }
     return { ok: true, updated: false, bestScoreSeconds: prevBest, updatedAt: now }
   }
 
   db.prepare(
-    `INSERT INTO anon_users (user_id, best_score, updated_at)
-     VALUES (?, ?, ?)
+    `INSERT INTO anon_users (user_id, best_score, updated_at, nickname)
+     VALUES (?, ?, ?, ?)
      ON CONFLICT(user_id) DO UPDATE SET
        best_score = excluded.best_score,
-       updated_at = excluded.updated_at`
-  ).run(cleaned, seconds, now)
+       updated_at = excluded.updated_at,
+       nickname = COALESCE(excluded.nickname, anon_users.nickname)`
+  ).run(cleaned, seconds, now, safeNickname)
 
   return { ok: true, updated: true, bestScoreSeconds: seconds, updatedAt: now }
 }
 
-function getAnonRanking(limit = 10) {
+function upsertAnonNickname(userId, nickname) {
+  const cleaned = String(userId ?? '').trim().toLowerCase()
+  if (!/^[a-f0-9]{32}$/.test(cleaned)) throw new Error('Invalid userId')
+
+  const safeNickname = sanitizeNickname(nickname)
+  const now = Date.now()
+
+  db.prepare(
+    `INSERT INTO anon_users (user_id, best_score, updated_at, nickname)
+     VALUES (?, NULL, ?, ?)
+     ON CONFLICT(user_id) DO UPDATE SET
+       updated_at = excluded.updated_at,
+       nickname = excluded.nickname`
+  ).run(cleaned, now, safeNickname)
+
+  return { ok: true, nickname: safeNickname, updatedAt: now }
+}
+
+function getAnonRanking(limit = 10, offset = 0) {
   const safeLimit = Math.max(1, Math.min(50, Number(limit) || 10))
+  const safeOffset = Math.max(0, Math.min(100000, Number(offset) || 0))
   const rows = db.prepare(
-    `SELECT user_id, best_score, updated_at
+    `SELECT user_id, nickname, best_score, updated_at
      FROM anon_users
      WHERE best_score IS NOT NULL
      ORDER BY best_score ASC, updated_at ASC
-     LIMIT ?`
-  ).all(safeLimit)
+     LIMIT ? OFFSET ?`
+  ).all(safeLimit, safeOffset)
 
   return rows.map((r) => ({
     userId: r.user_id,
+    nickname: r.nickname ?? null,
     bestScoreSeconds: r.best_score,
     updatedAt: r.updated_at,
   }))
@@ -389,6 +431,7 @@ module.exports = {
   addSnapshot,
   getSnapshots,
   upsertAnonBestScore,
+  upsertAnonNickname,
   getAnonRanking,
   resetProfile,
   registerUser,

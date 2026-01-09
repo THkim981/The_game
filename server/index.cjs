@@ -41,6 +41,7 @@ function sanitizeAnonUserId(input) {
 function handlePostScore(req, res) {
   const userId = sanitizeAnonUserId(req.body?.userId)
   const score = req.body?.score
+  const nickname = req.body?.nickname
   if (!userId) return res.status(400).json({ error: 'Invalid userId' })
   if (typeof score !== 'number' || !Number.isFinite(score) || score < 0) {
     return res.status(400).json({ error: 'Invalid score' })
@@ -61,7 +62,7 @@ function handlePostScore(req, res) {
   }
 
   try {
-    const result = upsertAnonBestScore(userId, score, meta)
+    const result = upsertAnonBestScore(userId, score, nickname)
     res.json({ ok: true, bestScoreSeconds: result.bestScoreSeconds })
   } catch (err) {
     res.status(400).json({ error: err.message })
@@ -70,16 +71,35 @@ function handlePostScore(req, res) {
 
 function handleGetRanking(req, res) {
   const limit = Math.max(1, Math.min(50, Number(req.query.limit ?? 10)))
-  res.json({ ranking: getAnonRanking(limit) })
+  const offset = Math.max(0, Math.min(100000, Number(req.query.offset ?? 0)))
+  res.json({ ranking: getAnonRanking(limit, offset) })
+}
+
+function handlePostNickname(req, res) {
+  const userId = sanitizeAnonUserId(req.body?.userId)
+  const nickname = req.body?.nickname
+  if (!userId) return res.status(400).json({ error: 'Invalid userId' })
+
+  try {
+    // Reuse score upsert logic: updates nickname even if score doesn't change.
+    // Passing Infinity would fail validation; instead, insert/update nickname-only row via DB helper.
+    const { upsertAnonNickname } = require('./db.cjs')
+    const result = upsertAnonNickname(userId, nickname)
+    res.json({ ok: true, nickname: result.nickname })
+  } catch (err) {
+    res.status(400).json({ error: err.message || 'Invalid nickname' })
+  }
 }
 
 // Spec endpoints
 app.post('/score', handlePostScore)
 app.get('/ranking', handleGetRanking)
+app.post('/nickname', handlePostNickname)
 
 // Backwards-compatible aliases under /api
 app.post('/api/score', handlePostScore)
 app.get('/api/ranking', handleGetRanking)
+app.post('/api/nickname', handlePostNickname)
 
 app.post('/api/register', (req, res) => {
   const { username, password } = req.body ?? {}

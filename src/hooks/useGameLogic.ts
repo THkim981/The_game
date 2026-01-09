@@ -159,7 +159,7 @@ export function useGameLogic(profileId: string) {
     nextPermLuckCost,
   } = actions
 
-  const saveRankTime = useCallback(() => {
+  const saveRankTime = useCallback((nickname?: string) => {
     if (rankPromptSeconds === null) {
       setRankPromptOpen(false)
       return
@@ -169,7 +169,10 @@ export function useGameLogic(profileId: string) {
     const activeGambleMultiplier = computeActiveGambleMultiplier(buffMultiplier)
     const prestigeElapsedSeconds = Math.max(0, (Date.now() - runStartMs) / 1000)
 
-    void postScore(profileId, rankPromptSeconds, {
+    void postScore(
+      profileId,
+      rankPromptSeconds,
+      {
       luck: resources.luck + permLuck,
       activeGambleMultiplier,
       elapsedSeconds,
@@ -180,12 +183,15 @@ export function useGameLogic(profileId: string) {
       insight: resources.insight,
       heat: resources.heat,
       safeUpgradeLevel,
-    }).catch(() => {
-      // ignore
+      },
+      nickname,
+    ).catch((e: unknown) => {
+      const message = e instanceof Error ? e.message : '랭킹 저장 실패'
+      pushToast('bad', '랭킹 저장 실패', message)
     })
 
     setRankPromptOpen(false)
-  }, [buffMultiplier, elapsedSeconds, levels, permLuck, profileId, rankPromptSeconds, resources, runStartMs])
+  }, [buffMultiplier, elapsedSeconds, levels, permLuck, profileId, pushToast, rankPromptSeconds, resources, runStartMs])
 
   const manualSave = useCallback(async () => {
     try {
