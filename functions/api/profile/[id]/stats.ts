@@ -33,7 +33,11 @@ export const onRequest: PagesFunction<Env> = async ({ request, env, params }) =>
       if (typeof body?.lastPrestige === 'number') patch.lastPrestige = body.lastPrestige
       if (typeof body?.lastPermLuck === 'number') patch.lastPermLuck = body.lastPermLuck
       if (typeof body?.lastCash === 'number') patch.lastCash = body.lastCash
-      if (typeof body?.bestTimeTo1e100Seconds === 'number') patch.bestTimeTo1e100Seconds = body.bestTimeTo1e100Seconds
+      if (typeof body?.bestTimeTo1e100Seconds === 'number') {
+        const v = body.bestTimeTo1e100Seconds
+        if (!Number.isFinite(v) || v < 1) return json({ error: 'Invalid bestTimeTo1e100Seconds' }, { status: 400 })
+        patch.bestTimeTo1e100Seconds = v
+      }
 
       return json(await upsertStats(env, profileId, patch))
     }

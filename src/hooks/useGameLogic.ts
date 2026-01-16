@@ -16,7 +16,12 @@ import { useResourceTick } from './useResourceTick'
 import { postScore, saveProfileSave, saveProfileStats } from '../utils/profileStorage'
 import type { ProfileStats, SavedGameState } from '../utils/profileStorage'
 
-export function useGameLogic(profileId: string) {
+type GameLogicOptions = {
+  outcomeTextDisabled?: boolean
+}
+
+export function useGameLogic(profileId: string, options?: GameLogicOptions) {
+  const outcomeTextDisabled = Boolean(options?.outcomeTextDisabled)
   const [resources, setResources] = useState<Resources>(initialResources)
   const [maxCash, setMaxCash] = useState(initialResources.cash)
   const [runStartMs, setRunStartMs] = useState(() => Date.now())
@@ -159,8 +164,29 @@ export function useGameLogic(profileId: string) {
     nextPermLuckCost,
   } = actions
 
+  const pushToastFiltered = useCallback(
+    (tone: Tone, title: string, detail: string) => {
+      if (!outcomeTextDisabled) {
+        pushToast(tone, title, detail)
+        return
+      }
+
+      // Hide only the risk outcome texts (success/fail variants).
+      if (title === '성공' || title === '실패' || title === '대성공!' || title === '대실패') return
+
+      pushToast(tone, title, detail)
+    },
+    [outcomeTextDisabled, pushToast],
+  )
+
   const saveRankTime = useCallback((nickname?: string) => {
     if (rankPromptSeconds === null) {
+      setRankPromptOpen(false)
+      return
+    }
+
+    if (rankPromptSeconds < 1) {
+      pushToast('bad', '랭킹 저장 불가', '1초 미만 기록은 등록할 수 없습니다.')
       setRankPromptOpen(false)
       return
     }
@@ -244,7 +270,7 @@ export function useGameLogic(profileId: string) {
     resourcesRef,
     setResources,
     addBuff,
-    pushToast,
+    pushToast: pushToastFiltered,
     triggerFx,
     adjustProbs,
   })

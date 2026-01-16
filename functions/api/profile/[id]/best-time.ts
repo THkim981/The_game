@@ -11,7 +11,7 @@ export const onRequest: PagesFunction<Env> = async ({ request, env, params }) =>
 
   const body = await readJson(request)
   const seconds = body?.seconds
-  if (typeof seconds !== 'number' || !Number.isFinite(seconds) || seconds < 0) {
+  if (typeof seconds !== 'number' || !Number.isFinite(seconds) || seconds < 1) {
     return json({ error: 'Invalid seconds' }, { status: 400 })
   }
 

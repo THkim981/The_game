@@ -28,6 +28,22 @@ const VALID_COUPONS: Record<string, { prestige: number; description: string }> =
 }
 
 function GameApp({ profileId }: GameAppProps) {
+  const [outcomeTextDisabled, setOutcomeTextDisabled] = useState(() => {
+    try {
+      return localStorage.getItem('ui_outcome_text_disabled') === '1'
+    } catch {
+      return false
+    }
+  })
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('ui_outcome_text_disabled', outcomeTextDisabled ? '1' : '0')
+    } catch {
+      // ignore
+    }
+  }, [outcomeTextDisabled])
+
   const {
     state: { resources, levels, toast, fx, openHelp, permLuck, cashHistory },
     derived: {
@@ -63,7 +79,7 @@ function GameApp({ profileId }: GameAppProps) {
       grantResources,
     },
     data: { upgrades, upgradeHelp, riskTiers },
-  } = useGameLogic(profileId)
+  } = useGameLogic(profileId, { outcomeTextDisabled })
 
   // 쿠폰 사용 기록 (localStorage 저장)
   const [usedCoupons, setUsedCoupons] = useState<Set<string>>(() => {
@@ -290,6 +306,7 @@ function GameApp({ profileId }: GameAppProps) {
       <SettingsModal
         open={settingsOpen}
         animationsDisabled={animationsDisabled}
+        outcomeTextDisabled={outcomeTextDisabled}
         featureView={featureView}
         numberFormatStyle={numberFormatStyle}
         onClose={() => setSettingsOpen(false)}
@@ -299,6 +316,7 @@ function GameApp({ profileId }: GameAppProps) {
         }}
         onManualSave={manualSave}
         onToggleAnimations={setAnimationsDisabled}
+        onToggleOutcomeText={setOutcomeTextDisabled}
         onChangeFeatureView={setFeatureView}
         onChangeNumberFormatStyle={setNumberFormatStyleState}
         onSetCashAbsolute={setCashAbsolute}

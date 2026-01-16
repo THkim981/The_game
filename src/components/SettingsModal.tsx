@@ -5,12 +5,14 @@ import { useMemo, useState } from 'react'
 type SettingsModalProps = {
   open: boolean
   animationsDisabled: boolean
+  outcomeTextDisabled: boolean
   featureView: 'penguin' | 'chart'
   numberFormatStyle: NumberFormatStyle
   onClose: () => void
   onOpenRanking: () => void
   onManualSave: () => void
   onToggleAnimations: (value: boolean) => void
+  onToggleOutcomeText: (value: boolean) => void
   onChangeFeatureView: (value: 'penguin' | 'chart') => void
   onChangeNumberFormatStyle: (value: NumberFormatStyle) => void
   onSetCashAbsolute: (cashValue: number) => void
@@ -20,12 +22,14 @@ type SettingsModalProps = {
 export function SettingsModal({
   open,
   animationsDisabled,
+  outcomeTextDisabled,
   featureView,
   numberFormatStyle,
   onClose,
   onOpenRanking,
   onManualSave,
   onToggleAnimations,
+  onToggleOutcomeText,
   onChangeFeatureView,
   onChangeNumberFormatStyle,
   onSetCashAbsolute,
@@ -71,6 +75,19 @@ export function SettingsModal({
               type="checkbox"
               checked={animationsDisabled}
               onChange={(event) => onToggleAnimations(event.target.checked)}
+              className="settings-checkbox"
+            />
+          </label>
+
+          <label className="settings-toggle-item">
+            <div className="settings-item-content">
+              <div className="settings-item-title">성공/실패 문구 숨기기</div>
+              <div className="settings-item-desc">도박 결과 토스트(성공/실패/대성공/대실패) 문구를 표시하지 않습니다.</div>
+            </div>
+            <input
+              type="checkbox"
+              checked={outcomeTextDisabled}
+              onChange={(event) => onToggleOutcomeText(event.target.checked)}
               className="settings-checkbox"
             />
           </label>

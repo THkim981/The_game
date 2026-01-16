@@ -113,6 +113,20 @@ if (!profileStatsCols.includes('lastCash')) {
     }
   }
 
+// Cleanup: remove sub-1s best times (treat as invalid)
+try {
+  db.prepare('UPDATE anon_users SET best_score = NULL WHERE best_score IS NOT NULL AND best_score < 1').run()
+} catch {
+  // ignore
+}
+try {
+  db.prepare(
+    'UPDATE profile_stats SET bestTimeTo1e100Seconds = NULL WHERE bestTimeTo1e100Seconds IS NOT NULL AND bestTimeTo1e100Seconds < 1'
+  ).run()
+} catch {
+  // ignore
+}
+
 function ensureProfile(profileId) {
   const now = Date.now()
   const existing = db.prepare('SELECT id FROM profiles WHERE id = ?').get(profileId)

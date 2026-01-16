@@ -100,7 +100,7 @@ export function RankPromptModal({
             </button>
             <button 
               onClick={onConfirmSave} 
-              disabled={!onSave || rankPromptSeconds === null}
+              disabled={!onSave || rankPromptSeconds === null || rankPromptSeconds < 1}
               style={{ 
                 padding: '10px 24px',
                 background: 'linear-gradient(135deg, #11a39c, #0d8079)',

@@ -27,6 +27,8 @@ export function useRankPrompt(params: RankPromptParams) {
     setRankPromptOpen,
   } = params
 
+  const minSecondsForRanking = 1
+
   useEffect(() => {
     if (!enabled) return
     if (rankPromptOpen) return
@@ -35,6 +37,13 @@ export function useRankPrompt(params: RankPromptParams) {
 
     const seconds = Math.max(0, (Date.now() - runStartMs) / 1000)
     setRankPromptSeconds(seconds)
+
+    // Exclude sub-1s runs: don't open the "record registration" modal and don't persist to DB.
+    if (seconds < minSecondsForRanking) {
+      setRankPromptOpen(false)
+      return
+    }
+
     setRankPromptOpen(true)
 
     void updateBestTimeTo1e100(profileId, seconds).catch(() => {

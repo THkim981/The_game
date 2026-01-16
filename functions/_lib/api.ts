@@ -106,6 +106,9 @@ export async function upsertStats(env: Env, profileId: string, statsPatch: any) 
 }
 
 export async function upsertBestTime(env: Env, profileId: string, seconds: number) {
+  if (typeof seconds !== 'number' || !Number.isFinite(seconds) || seconds < 1) {
+    throw new Error('Invalid best time')
+  }
   const prev = await getStats(env, profileId)
   const nextBest = prev.bestTimeTo1e100Seconds == null ? seconds : Math.min(prev.bestTimeTo1e100Seconds, seconds)
   return upsertStats(env, profileId, { bestTimeTo1e100Seconds: nextBest })
@@ -197,7 +200,7 @@ function sanitizeNickname(input: unknown): string | null {
 export async function upsertAnonBestScore(env: Env, userId: string, seconds: number, nickname?: unknown) {
   const cleaned = String(userId ?? '').trim().toLowerCase()
   if (!/^[a-f0-9]{32}$/.test(cleaned)) throw new Error('Invalid userId')
-  if (typeof seconds !== 'number' || !Number.isFinite(seconds) || seconds < 0) throw new Error('Invalid score')
+  if (typeof seconds !== 'number' || !Number.isFinite(seconds) || seconds < 1) throw new Error('Invalid score')
 
   const safeNickname = sanitizeNickname(nickname)
 
@@ -239,7 +242,7 @@ export async function getAnonRanking(env: Env, limit = 10, offset = 0) {
     env.DB,
     `SELECT user_id, nickname, best_score, updated_at
      FROM anon_users
-     WHERE best_score IS NOT NULL
+     WHERE best_score IS NOT NULL AND best_score >= 1
      ORDER BY best_score ASC, updated_at ASC
      LIMIT ? OFFSET ?`,
     [safeLimit, safeOffset],
