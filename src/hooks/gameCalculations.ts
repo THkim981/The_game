@@ -78,3 +78,36 @@ export function adjustProbabilities(tier: RiskTier, totalLuck: number) {
 
   return { jackpot, success, fail, crash }
 }
+
+export function computeBulkCost(params: {
+  baseCost: number
+  growth: number
+  startLevel: number
+  count: number
+}) {
+  const { baseCost, growth, startLevel, count } = params
+  if (count <= 0) return 0
+  if (growth === 1) return baseCost * count
+  const startCost = baseCost * Math.pow(growth, startLevel)
+  const factor = (Math.pow(growth, count) - 1) / (growth - 1)
+  return startCost * factor
+}
+
+export function computeMaxAffordableBulk(params: {
+  cash: number
+  baseCost: number
+  growth: number
+  startLevel: number
+  maxCount: number
+}) {
+  const { cash, baseCost, growth, startLevel, maxCount } = params
+  if (maxCount <= 0) return 0
+  const firstCost = baseCost * Math.pow(growth, startLevel)
+  if (cash < firstCost) return 0
+  if (growth === 1) return Math.min(maxCount, Math.floor(cash / baseCost))
+
+  const numerator = 1 + (cash * (growth - 1)) / firstCost
+  if (numerator <= 1) return 0
+  const maxN = Math.floor(Math.log(numerator) / Math.log(growth))
+  return Math.max(0, Math.min(maxCount, maxN))
+}

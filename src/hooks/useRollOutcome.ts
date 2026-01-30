@@ -4,7 +4,7 @@ import { createRollOutcome } from './riskHandlers'
 
 type RollOutcomeParams = {
   resourcesRef: React.MutableRefObject<Resources>
-  setResources: React.Dispatch<React.SetStateAction<Resources>>
+  setResources: (updater: (prev: Resources) => Resources) => void
   addBuff: (multiplier: number) => void
   pushToast: (tone: Tone, title: string, detail: string) => void
   triggerFx: (tone: Tone) => void

@@ -53,3 +53,7 @@ export type RiskTier = {
 }
 
 export type Tone = 'good' | 'warn' | 'bad'
+
+export type AutoBuyTarget =
+  | { kind: 'upgrade'; key: UpgradeKey; type: 'single' | 'bulk' }
+  | { kind: 'convert'; key: 'cashToChips' | 'cashToHeat' }

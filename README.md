@@ -21,6 +21,48 @@ Pages Functions + D1 조합으로 로컬에서 테스트할 때는 **마이그�
 - `npm run cf:dev`는 `--d1 DB=<local database uuid>` 형태로 바인딩합니다.
 - 이 UUID는 [wrangler.toml](wrangler.toml)의 `database_id` 값과 동일하며, `DB=the-game`처럼 이름으로 바인딩하면 로컬에서 **새 DB가 생성되어 테이블이 없다고 나올 수 있습니다**.
 
+## Cloudflare D1 (Remote) DB 관리
+
+원격(프로덕션/프리뷰) D1 DB는 **마이그레이션 파일(`migrations/*.sql`)을 적용**해서 관리합니다.
+
+이 레포 설정 기준:
+- D1 binding: `DB`
+- DB 이름: `the-game`
+- 설정 파일: [wrangler.toml](wrangler.toml)
+
+### 1) Wrangler CLI 준비
+
+Windows에서 `wrangler`가 “실행할 수 있는 프로그램”으로 인식되지 않으면, Wrangler가 설치되어 있지 않거나 PATH에 없어서입니다.
+
+- 권장(로컬 설치 + npx):
+	- 설치: `npm i -D wrangler`
+	- 확인: `npx wrangler --version`
+
+또는 글로벌 설치:
+- 설치: `npm i -g wrangler`
+- 확인: `wrangler --version`
+
+### 2) 로그인
+
+`npx wrangler login`
+
+### 3) 원격 마이그레이션 적용
+
+마이그레이션 적용(원격 D1):
+- `npx wrangler d1 migrations apply the-game --remote`
+
+설정 파일을 명시하고 싶다면:
+- `npx wrangler d1 migrations apply the-game --remote --config wrangler.toml`
+
+### 4) 원격 DB 상태 확인(선택)
+
+SQL 실행:
+- `npx wrangler d1 execute the-game --remote --command "SELECT name FROM sqlite_master WHERE type='table' ORDER BY 1;"`
+
+예: 1초 미만 랭킹 데이터가 정리되었는지 확인:
+- `npx wrangler d1 execute the-game --remote --command "SELECT COUNT(*) AS c FROM anon_users WHERE best_score IS NOT NULL AND best_score < 1;"`
+- `npx wrangler d1 execute the-game --remote --command "SELECT COUNT(*) AS c FROM profile_stats WHERE bestTimeTo1e100Seconds IS NOT NULL AND bestTimeTo1e100Seconds < 1;"`
+
 ## Render 배포 (프론트+서버 단일 도메인)
 
 이 프로젝트는 Express가 `dist/`를 정적 서빙하도록 되어 있어서(Render에서는 Web Service 1개로) 프론트+API를 같이 배포할 수 있습니다.

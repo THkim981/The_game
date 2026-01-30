@@ -5,19 +5,18 @@ import { buildGameActions } from './gameActions'
 
 type Params = {
   getResources: () => Resources
-  setResources: Dispatch<SetStateAction<Resources>>
-  levels: Record<UpgradeKey, number>
-  setLevels: Dispatch<SetStateAction<Record<UpgradeKey, number>>>
-  setBuffs: Dispatch<SetStateAction<Buff[]>>
-  buffsRef: MutableRefObject<Buff[]>
-  permLuck: number
-  setPermLuck: Dispatch<SetStateAction<number>>
+  setResources: (updater: (prev: Resources) => Resources) => void
+  getLevels: () => Record<UpgradeKey, number>
+  setLevels: (updater: (prev: Record<UpgradeKey, number>) => Record<UpgradeKey, number>) => void
+  setBuffs: (updater: (prev: Buff[]) => Buff[]) => void
+  getPermLuck: () => number
+  setPermLuck: (value: number) => void
   setSnapKey: Dispatch<SetStateAction<number>>
   setOpenHelp: Dispatch<SetStateAction<UpgradeKey | null>>
   setFx: Dispatch<SetStateAction<null | { tone: Tone; key: number }>>
   setToast: Dispatch<SetStateAction<null | { title: string; detail: string; tone: Tone; key: number }>>
   toastTimeout: MutableRefObject<number | null>
-  conversionCosts: { multiplier: number; cashToChips: number; cashToHeat: number }
+  getConversionCosts: () => { cashToChips: number; cashToHeat: number }
   effectiveUpgrades: Upgrade[]
   initialResources: Resources
   initialLevels: Record<UpgradeKey, number>
@@ -28,18 +27,17 @@ export function useGameActions(params: Params) {
   const {
     getResources,
     setResources,
-    levels,
+    getLevels,
     setLevels,
     setBuffs,
-    buffsRef,
-    permLuck,
+    getPermLuck,
     setPermLuck,
     setSnapKey,
     setOpenHelp,
     setFx,
     setToast,
     toastTimeout,
-    conversionCosts,
+    getConversionCosts,
     effectiveUpgrades,
     initialResources,
     initialLevels,
@@ -50,18 +48,17 @@ export function useGameActions(params: Params) {
     return buildGameActions({
       getResources,
       setResources,
-      levels,
+      getLevels,
       setLevels,
       setBuffs,
-      buffsRef,
-      permLuck,
+      getPermLuck,
       setPermLuck,
       setSnapKey,
       setOpenHelp,
       setFx,
       setToast,
       toastTimeout,
-      conversionCosts,
+      getConversionCosts,
       effectiveUpgrades,
       initialResources,
       initialLevels,
@@ -70,18 +67,17 @@ export function useGameActions(params: Params) {
   }, [
     getResources,
     setResources,
-    levels,
+    getLevels,
     setLevels,
     setBuffs,
-    buffsRef,
-    permLuck,
+    getPermLuck,
     setPermLuck,
     setSnapKey,
     setOpenHelp,
     setFx,
     setToast,
     toastTimeout,
-    conversionCosts,
+    getConversionCosts,
     effectiveUpgrades,
     initialResources,
     initialLevels,

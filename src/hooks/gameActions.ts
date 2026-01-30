@@ -1,25 +1,24 @@
 import { CASH_MAX, HEAT_MAX, initialBuffs } from '../constants'
 import type { Buff, Resources, Tone, Upgrade, UpgradeKey } from '../types'
 import { formatNumber } from '../utils/number'
-import { computePrestigeGain } from './gameCalculations'
+import { computeBulkCost, computeMaxAffordableBulk, computePrestigeGain } from './gameCalculations'
 
 export type GameActions = ReturnType<typeof buildGameActions>
 
 interface ActionDeps {
   getResources: () => Resources
-  setResources: React.Dispatch<React.SetStateAction<Resources>>
-  levels: Record<UpgradeKey, number>
-  setLevels: React.Dispatch<React.SetStateAction<Record<UpgradeKey, number>>>
-  setBuffs: React.Dispatch<React.SetStateAction<Buff[]>>
-  buffsRef: React.MutableRefObject<Buff[]>
-  permLuck: number
-  setPermLuck: React.Dispatch<React.SetStateAction<number>>
+  setResources: (updater: (prev: Resources) => Resources) => void
+  getLevels: () => Record<UpgradeKey, number>
+  setLevels: (updater: (prev: Record<UpgradeKey, number>) => Record<UpgradeKey, number>) => void
+  setBuffs: (updater: (prev: Buff[]) => Buff[]) => void
+  getPermLuck: () => number
+  setPermLuck: (value: number) => void
   setSnapKey: React.Dispatch<React.SetStateAction<number>>
   setOpenHelp: React.Dispatch<React.SetStateAction<UpgradeKey | null>>
   setFx: React.Dispatch<React.SetStateAction<{ tone: Tone; key: number } | null>>
   setToast: React.Dispatch<React.SetStateAction<{ tone: Tone; title: string; detail: string; key: number } | null>>
   toastTimeout: React.MutableRefObject<number | null>
-  conversionCosts: { cashToChips: number; cashToHeat: number }
+  getConversionCosts: () => { cashToChips: number; cashToHeat: number }
   effectiveUpgrades: Upgrade[]
   initialResources: Resources
   initialLevels: Record<UpgradeKey, number>
@@ -29,18 +28,17 @@ interface ActionDeps {
 export function buildGameActions({
   getResources,
   setResources,
-  levels,
+  getLevels,
   setLevels,
   setBuffs,
-  buffsRef,
-  permLuck,
+  getPermLuck,
   setPermLuck,
   setSnapKey,
   setOpenHelp,
   setFx,
   setToast,
   toastTimeout,
-  conversionCosts,
+  getConversionCosts,
   effectiveUpgrades,
   initialResources,
   initialLevels,
@@ -65,10 +63,7 @@ export function buildGameActions({
     setBuffs((prev) => {
       const prevProduct = prev.reduce((acc, b) => acc * b.multiplier, 1)
       const nextMultiplier = prevProduct * multiplier
-      const next: Buff[] = [
-        { id: `${Date.now()}-${Math.random()}`, multiplier: nextMultiplier, expiresAt: FAR_FUTURE_MS },
-      ]
-      buffsRef.current = next
+      const next: Buff[] = [{ id: `${Date.now()}-${Math.random()}`, multiplier: nextMultiplier, expiresAt: FAR_FUTURE_MS }]
       return next
     })
   }
@@ -76,6 +71,7 @@ export function buildGameActions({
   const handlePurchase = (key: UpgradeKey) => {
     const upgrade = effectiveUpgrades.find((u) => u.key === key)
     if (!upgrade) return
+    const levels = getLevels()
     const currentLevel = levels[key] ?? 0
     if (upgrade.maxLevel && currentLevel >= upgrade.maxLevel) return
 
@@ -90,24 +86,34 @@ export function buildGameActions({
   const handlePurchaseBulk = (key: UpgradeKey, quantity: number) => {
     const upgrade = effectiveUpgrades.find((u) => u.key === key)
     if (!upgrade) return
+    const levels = getLevels()
     const currentLevel = levels[key] ?? 0
     const maxPurchase = upgrade.maxLevel ? Math.max(0, Math.min(quantity, upgrade.maxLevel - currentLevel)) : quantity
     if (maxPurchase <= 0) return
 
-    let totalCost = 0
-    for (let i = 0; i < maxPurchase; i += 1) {
-      totalCost += upgrade.baseCost * Math.pow(upgrade.growth, currentLevel + i)
-    }
-
     const { cash } = getResources()
-    if (cash < totalCost) return
+    const affordableCount = computeMaxAffordableBulk({
+      cash,
+      baseCost: upgrade.baseCost,
+      growth: upgrade.growth,
+      startLevel: currentLevel,
+      maxCount: maxPurchase,
+    })
+    if (affordableCount <= 0) return
+
+    const totalCost = computeBulkCost({
+      baseCost: upgrade.baseCost,
+      growth: upgrade.growth,
+      startLevel: currentLevel,
+      count: affordableCount,
+    })
 
     setResources((prev) => ({ ...prev, cash: prev.cash - totalCost }))
-    setLevels((prev) => ({ ...prev, [key]: prev[key] + maxPurchase }))
+    setLevels((prev) => ({ ...prev, [key]: prev[key] + affordableCount }))
   }
 
   const convertCashToChips = () => {
-    const cost = conversionCosts.cashToChips
+    const cost = getConversionCosts().cashToChips
     const { cash } = getResources()
     if (cash < cost) return
 
@@ -116,7 +122,7 @@ export function buildGameActions({
   }
 
   const convertCashToHeat = () => {
-    const cost = conversionCosts.cashToHeat
+    const cost = getConversionCosts().cashToHeat
     const { cash } = getResources()
     if (cash < cost) return
 
@@ -155,9 +161,9 @@ export function buildGameActions({
     const gain = computePrestigeGain(snapshot)
     if (gain <= 0) return
 
-    setResources({ ...initialResources, prestige: snapshot.prestige + gain })
-    setLevels(initialLevels)
-    setBuffs(initialBuffs)
+    setResources(() => ({ ...initialResources, prestige: snapshot.prestige + gain }))
+    setLevels(() => initialLevels)
+    setBuffs(() => initialBuffs)
     setSnapKey((k) => k + 1)
     setOpenHelp(null)
     setFx(null)
@@ -166,11 +172,13 @@ export function buildGameActions({
   }
 
   const permLuckCap = 50
-  const nextPermLuckCost = Math.ceil(5 * Math.pow(1.2, permLuck))
+  const getNextPermLuckCost = () => Math.ceil(5 * Math.pow(1.2, getPermLuck()))
 
   const buyPermanentLuck = () => {
     const { prestige } = getResources()
+    const permLuck = getPermLuck()
     if (permLuck >= permLuckCap) return
+    const nextPermLuckCost = getNextPermLuckCost()
     if (prestige < nextPermLuckCost) return
 
     const nextLevel = permLuck + 1
@@ -192,6 +200,6 @@ export function buildGameActions({
     performPrestige,
     buyPermanentLuck,
     permLuckCap,
-    nextPermLuckCost,
+    getNextPermLuckCost,
   }
 }

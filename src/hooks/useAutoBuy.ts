@@ -1,7 +1,6 @@
 import { useEffect, useRef } from 'react'
-import type { Upgrade, UpgradeKey } from '../types'
-
-export type AutoBuyTarget = { key: UpgradeKey; type: 'single' | 'bulk' }
+import { AUTO_BUY_TICK_MS } from '../constants'
+import type { AutoBuyTarget, Upgrade, UpgradeKey } from '../types'
 
 interface AutoBuyParams {
   targets: AutoBuyTarget[]
@@ -10,6 +9,7 @@ interface AutoBuyParams {
   cash: number
   handlePurchase: (key: UpgradeKey) => void
   handlePurchaseBulk: (key: UpgradeKey, quantity: number) => void
+  intervalMs?: number
 }
 
 export function useAutoBuy({
@@ -19,23 +19,62 @@ export function useAutoBuy({
   cash,
   handlePurchase,
   handlePurchaseBulk,
+  intervalMs = AUTO_BUY_TICK_MS,
 }: AutoBuyParams) {
   const intervalRef = useRef<number | null>(null)
+  const targetsRef = useRef(targets)
+  const upgradesRef = useRef(upgrades)
+  const levelsRef = useRef(levels)
+  const cashRef = useRef(cash)
+  const handlePurchaseRef = useRef(handlePurchase)
+  const handlePurchaseBulkRef = useRef(handlePurchaseBulk)
 
   useEffect(() => {
-    if (targets.length > 0) {
+    targetsRef.current = targets
+  }, [targets])
+
+  useEffect(() => {
+    upgradesRef.current = upgrades
+  }, [upgrades])
+
+  useEffect(() => {
+    levelsRef.current = levels
+  }, [levels])
+
+  useEffect(() => {
+    cashRef.current = cash
+  }, [cash])
+
+  useEffect(() => {
+    handlePurchaseRef.current = handlePurchase
+  }, [handlePurchase])
+
+  useEffect(() => {
+    handlePurchaseBulkRef.current = handlePurchaseBulk
+  }, [handlePurchaseBulk])
+
+  useEffect(() => {
+    if (targetsRef.current.length > 0) {
       intervalRef.current = window.setInterval(() => {
-        for (const target of targets) {
-          const upgrade = upgrades.find((u) => u.key === target.key)
+        const targetsNow = targetsRef.current
+        const upgradesNow = upgradesRef.current
+        const levelsNow = levelsRef.current
+        const cashNow = cashRef.current
+        const onPurchase = handlePurchaseRef.current
+        const onPurchaseBulk = handlePurchaseBulkRef.current
+
+        for (const target of targetsNow) {
+          if (target.kind !== 'upgrade') continue
+          const upgrade = upgradesNow.find((u) => u.key === target.key)
           if (!upgrade) continue
 
-          const level = levels[upgrade.key] ?? 0
+          const level = levelsNow[upgrade.key] ?? 0
           const locked = upgrade.maxLevel ? level >= upgrade.maxLevel : false
 
           if (target.type === 'single') {
             const cost = upgrade.baseCost * Math.pow(upgrade.growth, level)
-            if (!locked && cash >= cost) {
-              handlePurchase(upgrade.key)
+            if (!locked && cashNow >= cost) {
+              onPurchase(upgrade.key)
             }
           }
 
@@ -51,12 +90,12 @@ export function useAutoBuy({
               bulkCost += upgrade.baseCost * Math.pow(upgrade.growth, level + i)
             }
 
-            if (bulkCount > 0 && cash >= bulkCost) {
-              handlePurchaseBulk(upgrade.key, 10)
+            if (bulkCount > 0 && cashNow >= bulkCost) {
+              onPurchaseBulk(upgrade.key, 10)
             }
           }
         }
-      }, 100)
+      }, intervalMs)
 
       return () => {
         if (intervalRef.current) {
@@ -71,5 +110,5 @@ export function useAutoBuy({
     }
 
     return undefined
-  }, [targets, upgrades, levels, cash, handlePurchase, handlePurchaseBulk])
+  }, [intervalMs, targets.length])
 }

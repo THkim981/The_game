@@ -1,6 +1,6 @@
 import './App.css'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import { HeroHeader } from './components/HeroHeader'
 import { RankPromptModal } from './components/RankPromptModal'
@@ -9,9 +9,9 @@ import { SettingsModal } from './components/SettingsModal'
 import { RiskSection } from './components/RiskSection'
 import { FxOverlay, Toast } from './components/ToastFx'
 import { UpgradesSection } from './components/UpgradesSection'
-import { BASE_INCOME, HEAT_MAX } from './constants'
-import type { AutoBuyTarget } from './hooks/useAutoBuy'
-import { useAutoBuy } from './hooks/useAutoBuy'
+import { BASE_INCOME } from './constants'
+import type { AutoBuyTarget } from './types'
+import { useCoupons } from './hooks/useCoupons'
 import { useGameLogic } from './hooks/useGameLogic'
 import type { RiskKey, UpgradeKey } from './types'
 import { getOrCreateAnonUserId } from './utils/anonUser'
@@ -20,11 +20,6 @@ import { formatNumber, getNumberFormatStyle, setNumberFormatStyle } from './util
 
 type GameAppProps = {
   profileId: string
-}
-
-// 쿠폰 설정 - 대소문자 포함 무작위 문자 (10자)
-const VALID_COUPONS: Record<string, { prestige: number; description: string }> = {
-  GmK7pQxR2z: { prestige: 2e4, description: 'Prestige 20000 지급' },
 }
 
 function GameApp({ profileId }: GameAppProps) {
@@ -52,6 +47,7 @@ function GameApp({ profileId }: GameAppProps) {
       incomeInsightBonus,
       conversionCosts,
       elapsedSeconds,
+      gamblePerSec,
       adjustProbs,
       prestigeGain,
       snapKey,
@@ -65,6 +61,8 @@ function GameApp({ profileId }: GameAppProps) {
     },
     actions: {
       setOpenHelp,
+      setAutoBuyTargets,
+      setAutoRiskKey,
       handlePurchase,
       handlePurchaseBulk,
       rollOutcome,
@@ -73,6 +71,7 @@ function GameApp({ profileId }: GameAppProps) {
       setCashAbsolute,
       performPrestige,
       buyPermanentLuck,
+      requestSnapshot,
       saveRankTime,
       dismissRankTime,
       manualSave,
@@ -81,58 +80,7 @@ function GameApp({ profileId }: GameAppProps) {
     data: { upgrades, upgradeHelp, riskTiers },
   } = useGameLogic(profileId, { outcomeTextDisabled })
 
-  // 쿠폰 사용 기록 (localStorage 저장)
-  const [usedCoupons, setUsedCoupons] = useState<Set<string>>(() => {
-    try {
-      const stored = localStorage.getItem(`used_coupons_${profileId}`)
-      return stored ? new Set(JSON.parse(stored)) : new Set()
-    } catch {
-      return new Set()
-    }
-  })
-
-  // 쿠폰 사용 기록 저장
-  useEffect(() => {
-    try {
-      localStorage.setItem(`used_coupons_${profileId}`, JSON.stringify([...usedCoupons]))
-    } catch {
-      // ignore
-    }
-  }, [usedCoupons, profileId])
-
-  // 쿠폰 적용 함수
-  const applyCoupon = useCallback(
-    (code: string): { success: boolean; message: string } => {
-      const trimmedCode = code.trim()
-
-      if (!trimmedCode) {
-        return { success: false, message: '쿠폰 코드를 입력하세요' }
-      }
-
-      // 이미 사용한 쿠폰인지 확인
-      if (usedCoupons.has(trimmedCode)) {
-        return { success: false, message: '이미 사용한 쿠폰입니다' }
-      }
-
-      // 유효한 쿠폰인지 확인
-      const couponData = VALID_COUPONS[trimmedCode]
-      if (!couponData) {
-        return { success: false, message: '유효하지 않은 쿠폰 코드입니다' }
-      }
-
-      // 쿠폰 혜택 지급
-      grantResources({ prestige: couponData.prestige })
-
-      // 사용 기록 저장
-      setUsedCoupons((prev) => new Set([...prev, trimmedCode]))
-
-      return {
-        success: true,
-        message: `🎉 ${couponData.description}\nPrestige +${formatNumber(couponData.prestige)}`,
-      }
-    },
-    [usedCoupons, grantResources],
-  )
+  const { applyCoupon } = useCoupons({ profileId, grantResources })
 
   const penguinCashThresholds = useMemo(() => [1e10, 1e16, 1e28, 1e40, 1e51], [])
   const penguinLevel = useMemo(() => {
@@ -156,12 +104,13 @@ function GameApp({ profileId }: GameAppProps) {
     refinery: { single: false, bulk: false },
   }))
 
+
   const autoBuyTargets = useMemo<AutoBuyTarget[]>(() => {
     const targets: AutoBuyTarget[] = []
     for (const upgrade of upgrades) {
       const config = autoBuyByButton[upgrade.key]
-      if (config?.single) targets.push({ key: upgrade.key, type: 'single' })
-      if (config?.bulk) targets.push({ key: upgrade.key, type: 'bulk' })
+      if (config?.single) targets.push({ kind: 'upgrade', key: upgrade.key, type: 'single' })
+      if (config?.bulk) targets.push({ kind: 'upgrade', key: upgrade.key, type: 'bulk' })
     }
     return targets
   }, [upgrades, autoBuyByButton])
@@ -174,6 +123,16 @@ function GameApp({ profileId }: GameAppProps) {
         [type]: enabled,
       },
     }))
+  }
+
+  const convertCashToChipsImmediate = () => {
+    convertCashToChips()
+    requestSnapshot()
+  }
+
+  const convertCashToHeatImmediate = () => {
+    convertCashToHeat()
+    requestSnapshot()
   }
   const [selectedAutoRisk, setSelectedAutoRisk] = useState<RiskKey | null>(null)
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -193,32 +152,13 @@ function GameApp({ profileId }: GameAppProps) {
 
   const totalLuck = Math.min(100, resources.luck + permLuck)
 
-  const autoRiskTier = useMemo(
-    () => (selectedAutoRisk ? riskTiers.find((t) => t.key === selectedAutoRisk) ?? null : null),
-    [riskTiers, selectedAutoRisk],
-  )
-
-  useAutoBuy({
-    targets: autoBuyTargets,
-    upgrades,
-    levels,
-    cash: resources.cash,
-    handlePurchase,
-    handlePurchaseBulk,
-  })
+  useEffect(() => {
+    setAutoBuyTargets(autoBuyTargets)
+  }, [autoBuyTargets, setAutoBuyTargets])
 
   useEffect(() => {
-    if (!autoRiskTier) return undefined
-
-    const tick = () => {
-      const ready = resources.heat >= HEAT_MAX && resources.chips >= autoRiskTier.cost
-      if (ready) rollOutcome(autoRiskTier)
-    }
-
-    tick() // 첫 루프 전에 즉시 한 번 체크
-    const id = window.setInterval(tick, 100)
-    return () => window.clearInterval(id)
-  }, [autoRiskTier, resources.heat, resources.chips, rollOutcome])
+    setAutoRiskKey(selectedAutoRisk)
+  }, [selectedAutoRisk, setAutoRiskKey])
 
   const formatDuration = (totalSeconds: number) => {
     const hours = Math.floor(totalSeconds / 3600)
@@ -260,8 +200,8 @@ function GameApp({ profileId }: GameAppProps) {
         collapsed={collapsed.resources}
         onToggle={() => setCollapsed((prev) => ({ ...prev, resources: !prev.resources }))}
         formatNumber={formatNumber}
-        convertCashToChips={convertCashToChips}
-        convertCashToHeat={convertCashToHeat}
+        convertCashToChips={convertCashToChipsImmediate}
+        convertCashToHeat={convertCashToHeatImmediate}
         animationsDisabled={animationsDisabled}
         featureView={featureView}
         cashHistory={cashHistory}
@@ -309,6 +249,7 @@ function GameApp({ profileId }: GameAppProps) {
         outcomeTextDisabled={outcomeTextDisabled}
         featureView={featureView}
         numberFormatStyle={numberFormatStyle}
+        gamblePerSec={gamblePerSec}
         onClose={() => setSettingsOpen(false)}
         onOpenRanking={() => {
           setSettingsOpen(false)

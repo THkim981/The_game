@@ -8,6 +8,7 @@ type SettingsModalProps = {
   outcomeTextDisabled: boolean
   featureView: 'penguin' | 'chart'
   numberFormatStyle: NumberFormatStyle
+  gamblePerSec: number
   onClose: () => void
   onOpenRanking: () => void
   onManualSave: () => void
@@ -25,6 +26,7 @@ export function SettingsModal({
   outcomeTextDisabled,
   featureView,
   numberFormatStyle,
+  gamblePerSec,
   onClose,
   onOpenRanking,
   onManualSave,
@@ -233,6 +235,7 @@ export function SettingsModal({
                 Cash 적용
               </button>
             </div>
+            <p className="settings-hint">도박 실행 속도: {gamblePerSec.toFixed(2)}회/초</p>
             <p className="settings-hint">⚠️ 개발 모드에서만 표시됩니다.</p>
           </div>
         )}
