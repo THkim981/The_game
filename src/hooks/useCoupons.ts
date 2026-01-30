@@ -12,7 +12,7 @@ type CouponDefinition = {
 
 // 쿠폰 설정 - 대소문자 포함 무작위 문자 (10자)
 const VALID_COUPONS: Record<string, CouponDefinition> = {
-  GmK7pQxR3z: { prestige: 2e6, description: 'Prestige 2000000 지급' },
+  GmK7pQxR2z: { prestige: 2e4, description: 'Prestige 20000 지급' },
 }
 
 type UseCouponsParams = {

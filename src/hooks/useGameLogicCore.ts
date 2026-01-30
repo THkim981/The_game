@@ -216,6 +216,11 @@ export function useGameLogicCore(profileId: string, options?: GameLogicOptions) 
       sampleAccumulatorRef.current = 0
       maxCashRef.current = initialResources.cash
       cashHistoryRef.current = [initialResources.cash]
+      setRunStartMs(now)
+      setRunMaxCash(initialResources.cash)
+      setElapsedSeconds(0)
+      setMaxCash(initialResources.cash)
+      setCashHistory([initialResources.cash])
       setRankPromptOpen(false)
       setRankPromptSeconds(null)
     },

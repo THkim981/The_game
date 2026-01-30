@@ -152,6 +152,11 @@ function GameApp({ profileId }: GameAppProps) {
 
   const totalLuck = Math.min(100, resources.luck + permLuck)
 
+  const performPrestigeImmediate = () => {
+    performPrestige()
+    requestSnapshot()
+  }
+
   useEffect(() => {
     setAutoBuyTargets(autoBuyTargets)
   }, [autoBuyTargets, setAutoBuyTargets])
@@ -220,7 +225,7 @@ function GameApp({ profileId }: GameAppProps) {
         handlePurchaseBulk={handlePurchaseBulk}
         autoBuyByButton={autoBuyByButton}
         setAutoBuyEnabled={setAutoBuyEnabled}
-        performPrestige={performPrestige}
+        performPrestige={performPrestigeImmediate}
         prestigeGain={prestigeGain}
         permLuck={permLuck}
         permLuckCap={permLuckCap}
