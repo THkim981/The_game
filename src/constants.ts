@@ -1,12 +1,12 @@
 import type { Buff, RiskTier, Upgrade, UpgradeKey } from './types'
 
 export const HEAT_MAX = 100
-export const CASH_MAX = 1e250
+export const CASH_MAX = 1e300
 export const CASH_RANK_TARGET = 1e100
 export const BASE_INCOME = 10 // C/s
 export const BASE_CHIP_RATE = 1 / 30 // G/s
 export const BASE_HEAT_RATE = HEAT_MAX / 180 // reach 100 in ~3 minutes baseline
-export const TICK_MS = 200 // resource updates every 200ms
+export const TICK_MS = 100 // resource updates every 100ms
 export const AUTO_BUY_TICK_MS = 100
 export const AUTO_RISK_TICK_MS = 100
 export const SNAPSHOT_MS = 200
